@@ -110,10 +110,13 @@ Login decision: Clerk, not Cognito (REQUIREMENTS R16, R17). An API Gateway JWT a
 | `GET /admin/pages/{id}` | `lambda/get-draft.ts` | `GetItem` (DRAFT) | works locally |
 | `PUT /admin/pages/{id}` | `lambda/put-pages.ts` | `UpdateItem` | planned |
 | `POST /admin/pages/{id}/publish` | not started | `GetItem` + `PutItem` | planned |
+| `DELETE /admin/pages/{id}` | `lambda/delete-page.ts` | `TransactWrite` (2 deletes) | works locally |
 
 Notes:
 
 * `list-pages` returns 404 when there are no pages. The admin UI must treat that as "no pages yet".
+* `delete-page` deletes the DRAFT and PUBLISHED items in 1 transaction. A condition on the draft makes an unknown id fail (404), and nothing is deleted. Tested on throwaway pages: 204, then 404, and a draft-only page gives 204.
+* Who writes what: I write each new pattern by hand. Claude takes over repeat work (more CRUD routes on a known pattern) and the admin UI.
 * `list-pages` builds each `id` from `pk` with `.replace(/^PAGE#/, "")`.
 * The update plan: parse the body (400 on bad JSON), block `pk`, `sk`, `gsi1pk` and `gsi1sk`, build `SET #f0 = :v0, ...`, set `gsi1sk` when the title changes, and use `attribute_exists(pk)` so an unknown id never makes a new page.
 

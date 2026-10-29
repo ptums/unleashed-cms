@@ -53,6 +53,8 @@ Decided on 2026-10-27 and 2026-10-28. Open questions are at the end.
 * N5. **CI/CD:** GitHub Actions deploys the stack.
 * N6. **Public repo:** no account IDs, ARNs, emails or secrets in the code or the docs.
 * N7. **Code style:** TypeScript everywhere. Always use braces on `if`, `else`, `for` and `while`.
+* N9. **Admin UI stack:** a Vite + React + TypeScript single-page app, styled with Tailwind and shadcn/ui. react-jsonschema-form renders each edit form from the page schema, with custom widgets for the `x-ui` hints. The build is static files on S3 + CloudFront, so there is no server to pay for.
+* N10. **2 tables:** `ContentTable` holds page content (DRAFT and PUBLISHED items). A separate `SchemaTable` holds the page schemas. The deploy writes schemas, and the admin Lambdas only read them.
 * N8. **Tagging:** every resource has the tag `project=unleashed-cms`, for cost reports.
 
 ## Out of scope
