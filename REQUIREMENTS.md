@@ -41,8 +41,9 @@ Decided on 2026-10-27 and 2026-10-28. Open questions are at the end.
 
 ### Login
 
-* R16. The admin uses Clerk for login. Only invited users (the editor and the developer) can sign in.
+* R16. The admin uses Clerk for login, in **Invite-only** access mode (Clerk Dashboard, Access mode). Only the 2 or 3 invited accounts can sign in, and there is no sign-up.
 * R17. Every admin route checks the Clerk token with an API Gateway JWT authorizer. A missing or bad token gets a 401, and the Lambda never runs. The public read route stays open.
+* R18. A second lock: the admin Lambdas accept only a short list of Clerk user IDs (the `sub` claim). Any other valid Clerk token gets a 403. The list lives outside the repo (for example, in SSM Parameter Store), so no user IDs go in the public code.
 
 ## Non-functional requirements
 
@@ -53,9 +54,9 @@ Decided on 2026-10-27 and 2026-10-28. Open questions are at the end.
 * N5. **CI/CD:** GitHub Actions deploys the stack.
 * N6. **Public repo:** no account IDs, ARNs, emails or secrets in the code or the docs.
 * N7. **Code style:** TypeScript everywhere. Always use braces on `if`, `else`, `for` and `while`.
+* N8. **Tagging:** every resource has the tag `project=unleashed-cms`, for cost reports.
 * N9. **Admin UI stack:** a Vite + React + TypeScript single-page app, styled with Tailwind and shadcn/ui. react-jsonschema-form renders each edit form from the page schema, with custom widgets for the `x-ui` hints. The build is static files on S3 + CloudFront, so there is no server to pay for.
 * N10. **2 tables:** `ContentTable` holds page content (DRAFT and PUBLISHED items). A separate `SchemaTable` holds the page schemas. The deploy writes schemas, and the admin Lambdas only read them.
-* N8. **Tagging:** every resource has the tag `project=unleashed-cms`, for cost reports.
 
 ## Out of scope
 
