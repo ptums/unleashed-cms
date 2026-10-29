@@ -42,6 +42,17 @@ What I learned while building this CMS. Each item is short, so I can turn it int
 * **Watch auto-imports.** VS Code added an import from `aws-globalaccelerator`, which would pull CDK into the Lambda bundle.
 * **Run the handler locally first.** `tsx` plus a fake event tests the code against the real table, with no deploy.
 
+## API Gateway
+
+* **2 permissions, 2 directions.** `table.grant` lets the function call DynamoDB. The Lambda permission lets API Gateway call the function.
+* **A 404 can come from 2 places.** My code says `"No page found"`. API Gateway says `"Not Found"` when no route matches, and my function never runs.
+* **A public URL needs a rate limit.** At about $1 per million requests, 2 per second nonstop is about $5 a month, inside the budget.
+* **Escape hatches.** When a CDK construct has no option for a setting, `node.defaultChild` gives the raw CloudFormation resource, and you set it there.
+* **Throttling is a token bucket.** The burst is the bucket size, and the rate is how fast it refills. Slow requests refill it, so only the excess gets `429`.
+
+* **Rest destructuring drops fields:** `const { pk, sk, ...page } = Item;`. Do not leak your table design to clients.
+* **Set `content-type` yourself.** A Lambda that returns a string body gets `text/plain` by default, even when the body is JSON.
+
 ## The shell
 
 * **A shell variable lives in 1 terminal only.** `export TABLE=...` in 1 terminal does nothing in another. An empty `$TABLE` made a command fail.

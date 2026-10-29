@@ -14,6 +14,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   if (!pathId) {
     return {
       statusCode: 400,
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "no path id" }),
     };
   }
@@ -28,13 +29,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   if (!Item) {
     return {
       statusCode: 404,
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: "No page found" }),
     };
   }
 
+  const { pk, sk, ...page } = Item;
+
   return {
     statusCode: 200,
-    body: JSON.stringify(Item),
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(page),
   };
 };
 

@@ -93,8 +93,14 @@ Result: the main table holds 2 Home items (DRAFT and PUBLISHED), and the index h
 
    Verified: 200 for `home`, 404 for a missing page, 400 with no id.
 
+5. **The function in CDK:** `NodejsFunction` (esbuild bundles the TS), `TABLE_NAME` from `table.tableName`, and `table.grant(fn, "dynamodb:GetItem")` for least privilege. Verified with `aws lambda invoke`: 200 and 404.
+6. **The HTTP API:** `HttpApi` with the route `GET /pages/{id}`, `HttpLambdaIntegration`, and a `CfnOutput` for the URL. Verified with `curl`: 200, 404 from my code, and 404 from API Gateway when no route matches.
+7. **Rate limit:** `HttpApi` has no throttle option for its default stage, so I used an escape hatch: `api.defaultStage!.node.defaultChild as apigwv2.CfnStage`, then `defaultRouteSettings` with a rate of 2 per second and a burst of 10. The diff showed only `[~]`. Verified: the stage shows the limits, and a burst of 30 parallel calls got a `429`.
+
+8. **Clean the response:** `const { pk, sk, ...page } = Item;` sends only the page fields. Verified: `{"title":"Home"}`.
+9. **Set the content type:** each return sends `content-type: application/json`. Verified on the 200 and the 404.
+
 ## Next
 
-* Step 5, part 1: the function in CDK (`NodejsFunction`), with only `dynamodb:GetItem`.
-* Step 5, part 2: the HTTP API route `GET /pages/{id}`.
+* The admin side: a login, then routes to list, read and update DRAFT pages.
 * Turn on the `project` cost allocation tag (it shows in Billing up to 24 hours after the first tagged resource).
