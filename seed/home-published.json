@@ -1,0 +1,11 @@
+{
+  "pk": {
+    "S": "PAGE#home"
+  },
+  "sk": {
+    "S": "PUBLISHED"
+  },
+  "title": {
+    "S": "Home"
+  }
+}

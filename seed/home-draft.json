@@ -1,0 +1,17 @@
+{
+  "pk": {
+    "S": "PAGE#home"
+  },
+  "sk": {
+    "S": "DRAFT"
+  },
+  "gsi1pk": {
+    "S": "PAGES"
+  },
+  "gsi1sk": {
+    "S": "home"
+  },
+  "title": {
+    "S": "Home"
+  }
+}
