@@ -100,7 +100,25 @@ Result: the main table holds 2 Home items (DRAFT and PUBLISHED), and the index h
 8. **Clean the response:** `const { pk, sk, ...page } = Item;` sends only the page fields. Verified: `{"title":"Home"}`.
 9. **Set the content type:** each return sends `content-type: application/json`. Verified on the 200 and the 404.
 
+## Step 6: the admin routes (started 2026-10-28)
+
+Login decision: Clerk, not Cognito (REQUIREMENTS R16, R17). An API Gateway JWT authorizer will check the Clerk token. Until it exists, admin routes are built and tested locally only, never deployed.
+
+| Route | Handler | DynamoDB call | Status |
+|-------|---------|---------------|--------|
+| `GET /admin/pages` | `lambda/list-pages.ts` | `Query` on `gsi1` | works locally |
+| `GET /admin/pages/{id}` | `lambda/get-draft.ts` | `GetItem` (DRAFT) | works locally |
+| `PUT /admin/pages/{id}` | `lambda/put-pages.ts` | `UpdateItem` | planned |
+| `POST /admin/pages/{id}/publish` | not started | `GetItem` + `PutItem` | planned |
+
+Notes:
+
+* `list-pages` returns 404 when there are no pages. The admin UI must treat that as "no pages yet".
+* `list-pages` builds each `id` from `pk` with `.replace(/^PAGE#/, "")`.
+* The update plan: parse the body (400 on bad JSON), block `pk`, `sk`, `gsi1pk` and `gsi1sk`, build `SET #f0 = :v0, ...`, set `gsi1sk` when the title changes, and use `attribute_exists(pk)` so an unknown id never makes a new page.
+
 ## Next
 
-* The admin side: a login, then routes to list, read and update DRAFT pages.
+* Finish the update route, then the publish route.
+* Make the Clerk app, then add the JWT authorizer and deploy the admin routes.
 * Turn on the `project` cost allocation tag (it shows in Billing up to 24 hours after the first tagged resource).

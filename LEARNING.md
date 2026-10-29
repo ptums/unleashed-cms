@@ -34,6 +34,15 @@ What I learned while building this CMS. Each item is short, so I can turn it int
 * **`Count` vs `ScannedCount`.** `ScannedCount` is how many items DynamoDB read. `Count` is how many it returned after a filter. You pay for `ScannedCount`, so a filter does not make a read cheaper. A good key or a sparse index does.
 * **Prove the test, not only the output.** My first `put-item` failed with no error I noticed, and the index count looked right anyway. Check the main table too, so you know the test really ran.
 
+## DynamoDB expressions
+
+* **Values vs names.** `:p` stands in for a value and goes in `ExpressionAttributeValues`. `#n` stands in for a field name and goes in `ExpressionAttributeNames`. Names are needed for reserved words like `name` or `status`.
+* **`IndexName` is the index name** (`gsi1`), not its key name (`gsi1pk`).
+* **Import commands from `lib-dynamodb`,** not `client-dynamodb`, to use plain JSON values.
+* **`JSON.stringify` drops `undefined` fields with no error.** `id: item.id` on an item with no `id` field just vanishes.
+* **`UpdateItem` cannot change the table keys,** but it can change index keys like `gsi1pk`. Block them yourself.
+* **`attribute_exists(pk)` stops an update from making a new item.**
+
 ## Lambda
 
 * **Make the SDK client outside the handler.** Lambda reuses it on warm calls.
@@ -54,6 +63,8 @@ What I learned while building this CMS. Each item is short, so I can turn it int
 * **Set `content-type` yourself.** A Lambda that returns a string body gets `text/plain` by default, even when the body is JSON.
 
 ## The shell
+
+* **The terminal reads the saved file.** An unsaved edit in VS Code does not run. Turn on File, Auto Save.
 
 * **A shell variable lives in 1 terminal only.** `export TABLE=...` in 1 terminal does nothing in another. An empty `$TABLE` made a command fail.
 * **A command in an editor tab does not run.** It must go in the terminal.

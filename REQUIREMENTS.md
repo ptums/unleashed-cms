@@ -39,6 +39,11 @@ Decided on 2026-10-27 and 2026-10-28. Open questions are at the end.
 
 * R15. The site's `/admin` route sends a 302 redirect to `cms.uptherapygroup.com`.
 
+### Login
+
+* R16. The admin uses Clerk for login. Only invited users (the editor and the developer) can sign in.
+* R17. Every admin route checks the Clerk token with an API Gateway JWT authorizer. A missing or bad token gets a 401, and the Lambda never runs. The public read route stays open.
+
 ## Non-functional requirements
 
 * N1. **Cost:** a $10 monthly AWS budget with alerts at 50%, 80% and 100% of actual cost, plus a forecast alert. Cost Anomaly Detection alerts at $5 and 40%. (Done: see PROCESS.md, step 1.)
@@ -60,3 +65,4 @@ Decided on 2026-10-27 and 2026-10-28. Open questions are at the end.
 
 * Can the editor ever move a block to a different zone?
 * Does vinext on Cloudflare Workers support on-demand revalidation? (Not verified.)
+* Clerk session tokens may have no `aud` claim, and the API Gateway JWT authorizer needs 1. A Clerk JWT template may fix this. (Not verified.)
