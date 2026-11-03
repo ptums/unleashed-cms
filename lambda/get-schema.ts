@@ -38,7 +38,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   return {
     statusCode: 200,
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ id: pathId, version: Item.version, schema: Item.schema }),
+    // The sync stores the schema as JSON text, so its field order survives. Older items hold a map.
+    body: JSON.stringify({
+      id: pathId,
+      version: Item.version,
+      schema: typeof Item.schema === "string" ? JSON.parse(Item.schema) : Item.schema,
+    }),
   };
 };
 

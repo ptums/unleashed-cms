@@ -3,7 +3,7 @@ import Form from "@rjsf/shadcn";
 import type CoreForm from "@rjsf/core";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import Ajv2020 from "ajv/dist/2020";
-import type { RJSFSchema } from "@rjsf/utils";
+import type { ErrorTransformer, RJSFSchema } from "@rjsf/utils";
 import {
   ApiError,
   getDraft,
@@ -15,6 +15,7 @@ import {
   type SchemaRecord,
 } from "./api";
 import { buildUiSchema, pickSchemaFields } from "./uiSchema";
+import { fillReferenceCollections, publishSchema, zoneSchema, zonesOf } from "./editorSchema";
 
 // The schemas are JSON Schema 2020-12 (prefixItems, unevaluatedProperties), so use Ajv2020.
 // strict: false lets Ajv ignore the x-cms and x-ui hint keywords.
@@ -66,7 +67,7 @@ export function App() {
     <div className="flex min-h-screen">
       <aside className="w-64 shrink-0 border-r bg-card">
         <div className="border-b px-5 py-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Up Therapy Group</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Unleashed Potential Therapy Group</p>
           <h1 className="text-lg font-semibold">Content</h1>
         </div>
         <nav className="p-3" aria-label="Pages">
@@ -105,6 +106,44 @@ export function App() {
   );
 }
 
+// Ajv messages are written for developers. Say the same thing in plain words.
+const transformErrors: ErrorTransformer = (errors) =>
+  errors.map((error) => {
+    const params = (error.params ?? {}) as Record<string, unknown>;
+    let message = error.message ?? "This is not valid.";
+    switch (error.name) {
+      case "required":
+        message = "This is required.";
+        break;
+      case "minLength":
+        message = params.limit === 1 ? "This is required." : `Use at least ${String(params.limit)} characters.`;
+        break;
+      case "maxLength":
+        message = `Keep this to ${String(params.limit)} characters or fewer.`;
+        break;
+      case "minItems":
+        message = `Add at least ${String(params.limit)}.`;
+        break;
+      case "maxItems":
+        message = `Use ${String(params.limit)} or fewer.`;
+        break;
+      case "format":
+        message = params.format === "uri" ? "Enter a full web address, starting with https://" : "This is not in the right format.";
+        break;
+      case "minimum":
+      case "maximum":
+        message = `Enter a number ${error.name === "minimum" ? "of at least" : "no more than"} ${String(params.limit)}.`;
+        break;
+      case "oneOf":
+      case "anyOf":
+      case "const":
+      case "enum":
+        message = "Pick one of the options.";
+        break;
+    }
+    return { ...error, message, stack: message };
+  });
+
 function PageEditor({ id }: { id: string }) {
   const [schemaRecord, setSchemaRecord] = useState<SchemaRecord>();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
@@ -112,6 +151,9 @@ function PageEditor({ id }: { id: string }) {
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState<"save" | "publish">();
   const [notice, setNotice] = useState<Notice>();
+  const [zone, setZone] = useState<string>();
+  const [zonesWithErrors, setZonesWithErrors] = useState<string[]>([]);
+  const [markErrors, setMarkErrors] = useState(false);
   const formRef = useRef<CoreForm>(null);
 
   useEffect(() => {
@@ -119,6 +161,7 @@ function PageEditor({ id }: { id: string }) {
       .then(([record, draft]) => {
         setSchemaRecord(record);
         setFormData(pickSchemaFields(record.schema, draft));
+        setZone(zonesOf(record.schema)[0]?.name);
       })
       .catch((error) => {
         setLoadError(errorText(error));
@@ -139,14 +182,32 @@ function PageEditor({ id }: { id: string }) {
     };
   }, [dirty]);
 
-  const uiSchema = useMemo(() => (schemaRecord ? buildUiSchema(schemaRecord.schema) : {}), [schemaRecord]);
+  const zones = useMemo(() => (schemaRecord ? zonesOf(schemaRecord.schema) : []), [schemaRecord]);
+  const formSchema = useMemo(
+    () => (schemaRecord && zone ? zoneSchema(schemaRecord.schema, zone) : undefined),
+    [schemaRecord, zone],
+  );
+  const uiSchema = useMemo(() => (formSchema ? buildUiSchema(formSchema) : {}), [formSchema]);
+
+  // After publish finds problems and switches zone, mark the fields in that zone.
+  useEffect(() => {
+    if (markErrors) {
+      formRef.current?.validateForm();
+      setMarkErrors(false);
+    }
+  }, [markErrors, zone]);
+
+  const fullData = useCallback(() => {
+    if (!schemaRecord) {
+      return {};
+    }
+    const picked = pickSchemaFields(schemaRecord.schema, formData);
+    return fillReferenceCollections(schemaRecord.schema, picked) as Record<string, unknown>;
+  }, [formData, schemaRecord]);
 
   // Drafts save even when they are not complete (R10), so no validation here.
   const save = useCallback(async () => {
-    if (!schemaRecord) {
-      return false;
-    }
-    const fields = pickSchemaFields(schemaRecord.schema, formData);
+    const fields = fullData();
     if (Object.keys(fields).length === 0) {
       setNotice({ kind: "info", text: "Nothing to save yet." });
       return false;
@@ -154,7 +215,7 @@ function PageEditor({ id }: { id: string }) {
     await saveDraft(id, fields);
     setDirty(false);
     return true;
-  }, [formData, id, schemaRecord]);
+  }, [fullData, id]);
 
   const onSave = async () => {
     setBusy("save");
@@ -170,19 +231,34 @@ function PageEditor({ id }: { id: string }) {
     }
   };
 
-  // Strict validation runs only on publish (R11). Save first, so publish copies these edits.
+  // Strict validation runs only on publish (R11), against the stored schema. The AI-written
+  // fields (SEO, image descriptions) are not required here: the AI service adds them.
   const onPublish = async () => {
+    if (!schemaRecord) {
+      return;
+    }
     setBusy("publish");
     setNotice(undefined);
     try {
-      const valid = formRef.current?.validateForm() ?? false;
-      if (!valid) {
-        setNotice({ kind: "error", text: "Fix the marked fields before you publish. Your draft is not changed." });
+      const { errors } = validator.validateFormData(fullData(), publishSchema(schemaRecord.schema) as RJSFSchema);
+      if (errors.length > 0) {
+        const bad = [...new Set(errors.map((error) => (error.property ?? "").split(".")[1]).filter(Boolean))];
+        setZonesWithErrors(bad);
+        const labels = zones.filter((z) => bad.includes(z.name)).map((z) => z.label);
+        setNotice({
+          kind: "error",
+          text: `Some sections need a fix before you publish: ${labels.join(", ")}. Your draft is not changed.`,
+        });
+        if (zone && !bad.includes(zone)) {
+          setZone(bad[0]);
+        }
+        setMarkErrors(true);
         return;
       }
+      setZonesWithErrors([]);
       await save();
       await publishPage(id);
-      setNotice({ kind: "ok", text: "Published." });
+      setNotice({ kind: "ok", text: "Published. The site shows these changes now." });
     } catch (error) {
       setNotice({ kind: "error", text: `Publish failed: ${errorText(error)}` });
     } finally {
@@ -193,22 +269,19 @@ function PageEditor({ id }: { id: string }) {
   if (loadError) {
     return <p className="p-8 text-destructive">Could not load this page: {loadError}</p>;
   }
-  if (!schemaRecord) {
+  if (!schemaRecord || !formSchema || !zone) {
     return <p className="p-8 text-muted-foreground">Loading…</p>;
   }
 
   const title = typeof schemaRecord.schema.title === "string" ? schemaRecord.schema.title : id;
-  const route = (schemaRecord.schema["x-cms"] as { route?: string } | undefined)?.route;
+  const isHidden = (name: string) => (formData[name] as { hidden?: boolean } | undefined)?.hidden === true;
 
   return (
     <div>
       <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b bg-background/95 px-8 py-4 backdrop-blur">
         <div className="min-w-0">
           <h2 className="truncate text-xl font-semibold">{title}</h2>
-          <p className="text-xs text-muted-foreground">
-            {route ? `${route} · ` : ""}schema v{schemaRecord.version}
-            {dirty ? " · unsaved changes" : ""}
-          </p>
+          <p className="text-xs text-muted-foreground">{dirty ? "You have unsaved changes" : "All changes saved"}</p>
         </div>
         <div className="flex shrink-0 gap-2">
           <button
@@ -245,20 +318,50 @@ function PageEditor({ id }: { id: string }) {
         </div>
       ) : null}
 
-      <div className="max-w-3xl px-8 py-6">
-        <Form
-          ref={formRef}
-          schema={schemaRecord.schema as RJSFSchema}
-          uiSchema={uiSchema}
-          formData={formData}
-          validator={validator}
-          showErrorList={false}
-          noHtml5Validate
-          onChange={(event) => {
-            setFormData(event.formData as Record<string, unknown>);
-            setDirty(true);
-          }}
-        />
+      <div className="flex gap-8 px-8 py-6">
+        <nav className="w-52 shrink-0" aria-label="Sections of this page">
+          <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Sections</p>
+          <ol className="space-y-1">
+            {zones.map((z) => (
+              <li key={z.name}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setZone(z.name);
+                  }}
+                  aria-current={z.name === zone ? "true" : undefined}
+                  className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                    z.name === zone ? "bg-secondary font-medium text-secondary-foreground" : "hover:bg-accent"
+                  }`}
+                >
+                  <span className={isHidden(z.name) ? "text-muted-foreground line-through" : undefined}>{z.label}</span>
+                  {zonesWithErrors.includes(z.name) ? (
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" aria-label="needs a fix" />
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <div className="min-w-0 max-w-2xl flex-1">
+          <Form
+            key={zone}
+            ref={formRef}
+            schema={formSchema as RJSFSchema}
+            uiSchema={uiSchema}
+            formData={{ [zone]: formData[zone] }}
+            validator={validator}
+            transformErrors={transformErrors}
+            showErrorList={false}
+            noHtml5Validate
+            onChange={(event) => {
+              const next = (event.formData ?? {}) as Record<string, unknown>;
+              setFormData((current) => ({ ...current, [zone]: next[zone] }));
+              setDirty(true);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

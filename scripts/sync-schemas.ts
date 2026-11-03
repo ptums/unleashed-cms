@@ -91,7 +91,11 @@ async function main() {
       }),
     );
 
-    if (stableStringify(Item?.schema) === stableStringify(json)) {
+    // The schema is stored as JSON text, because a DynamoDB map does not keep key order,
+    // and the order of properties is the order of fields in the form. An older item that
+    // holds a map is rewritten once, even when the schema itself did not change.
+    const storedAsText = typeof Item?.schema === "string";
+    if (storedAsText && stableStringify(JSON.parse(Item.schema)) === stableStringify(json)) {
       console.log(`id: ${id} unchanged`);
       continue;
     }
@@ -107,7 +111,7 @@ async function main() {
               Item: {
                 pk: `SCHEMA#${id}`,
                 sk: `VERSION#${version}`,
-                schema: json,
+                schema: JSON.stringify(json),
                 version,
               },
             },
@@ -118,7 +122,7 @@ async function main() {
               Item: {
                 pk: `SCHEMA#${id}`,
                 sk: `LATEST`,
-                schema: json,
+                schema: JSON.stringify(json),
                 version,
               },
             },

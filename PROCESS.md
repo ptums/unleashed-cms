@@ -173,8 +173,23 @@ Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --
 * Checked in a browser by Peter: the page list, the Home form and Save draft work.
 * Limits: clearing a top-level field does not remove it (`put-pages` only sets fields), collections have no entry list yet, and there is no image upload.
 
+## Step 10: a simpler editor for a non-technical user (2026-11-02, built by Claude)
+
+Peter's ask: the editor is a business person with little technical knowledge, so take away every field that can be abstracted. The stored schemas and the saved data do not change. `admin/src/editorSchema.ts` only changes what the form shows:
+
+* **1 section at a time.** The page's zones are listed on the left, in page order. The form shows only the chosen section. When publish finds a problem, the sections that need a fix get a red dot, and the form opens the first one.
+* **Developer settings are left out** of the form, and their saved values are kept: `focalPoint`, `anchor`, `background`, `noindex`, `externalCalendarId`, `defaultSessionTypeKey`, `provider`, `currency`, `readMinutes`, read-only fields, and the "hide" switch on sections that must always show. A field is left out only when it is optional or has a default, so it can never block publish with an error the editor cannot fix.
+* **Plain labels:** `eyebrow` is "Small label above the heading", `cta` is "Button", `alt` is "Image description", "Hero" is "Top of page", and so on. Coded choices get names: `auto`/`manual` are "Choose automatically" and "Let me pick". Link targets are "A page on this site" or "A web address", not "Option 1" and "Option 2".
+* **Reference lists** (clinicians, specialties, posts) no longer ask for the "collection". The list already knows it, and the save fills it in.
+* **Help text** drops notes for developers (H1, WCAG, "Keep hidden false").
+* **Error messages** are plain: "This is required.", "Keep this to 60 characters or fewer."
+* **Field order fix:** a DynamoDB map does not keep key order, so every form showed its fields A to Z (`body` before `heading`). The sync now stores each schema as JSON text, and `get-schema` parses it. All 9 schemas were rewritten once (Home is version 8).
+* **AI-written fields are out of the editor** (Peter, 2026-11-02): the SEO section and every image description (`alt`) are gone from all forms. The AI service writes them on publish. The publish check in the UI no longer requires them (`publishSchema`), but the stored schema still does, so a page is only complete after the AI service has run.
+* **Name:** "Up Therapy Group" is the internal name only. Everything the editor sees says "Unleashed Potential Therapy Group".
+* Verified with all 9 schemas: no form shows SEO or `alt`, each section form accepts its part of the example content, and data the editor can produce passes the publish check. Peter checked the section view in a browser before the SEO change.
+
 ## Next
 
-* The AI step that drafts SEO metadata for a blog post (R12). Peter writes it.
+* The Bedrock AI service (R12), built by Peter. It runs on publish and writes the SEO data and the image descriptions (`alt`) for the page. Rule from Peter: on the first publish it always writes them. On a later publish the page already has them, so the service first decides if the changes are big enough to write new ones. The editor never sees these fields. Until the service exists, published pages have no SEO data or image descriptions.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
 * Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.
