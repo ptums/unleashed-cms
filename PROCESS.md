@@ -190,6 +190,7 @@ Peter's ask: the editor is a business person with little technical knowledge, so
 
 ## Next
 
+* **Collections (next session, before Bedrock).** Clinicians, blog posts and specialties have many entries. Plan agreed 2026-11-02: keys `pk = ENTRY#<type>#<slug>` with DRAFT and PUBLISHED items, and `gsi1pk = ENTRIES#<type>` to list 1 type. Admin routes under `/admin/collections/{type}/entries` (list, create) and `/{slug}` (get, save, publish, delete). The editor types a name and the CMS makes the slug. **Peter writes the create route** (a POST that makes the slug and refuses a taken one), because it is a new pattern. Claude writes the repeat routes and the admin UI (a side bar group per collection, with "+ Add new"). Public collection routes wait for the website build.
 * The Bedrock AI service (R12), built by Peter. It runs on publish and writes the SEO data and the image descriptions (`alt`) for the page. Rule from Peter: on the first publish it always writes them. On a later publish the page already has them, so the service first decides if the changes are big enough to write new ones. The editor never sees these fields. Until the service exists, published pages have no SEO data or image descriptions.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
 * Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.
