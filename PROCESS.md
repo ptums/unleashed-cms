@@ -113,7 +113,7 @@ Login decision: Clerk, not Cognito (REQUIREMENTS R16, R17). An API Gateway JWT a
 | `GET /admin/pages` | `lambda/list-pages.ts` | `Query` on `gsi1` | works locally |
 | `GET /admin/pages/{id}` | `lambda/get-draft.ts` | `GetItem` (DRAFT) | works locally |
 | `PUT /admin/pages/{id}` | `lambda/put-pages.ts` | `UpdateItem` (DRAFT) | works locally |
-| `POST /admin/pages/{id}/publish` | not started | `GetItem` + `PutItem` | planned |
+| `POST /admin/pages/{id}/publish` | `lambda/publish-page.ts` | `GetItem` (DRAFT) + `PutItem` (PUBLISHED) | works with a stub client |
 | `DELETE /admin/pages/{id}` | `lambda/delete-page.ts` | `TransactWrite` (2 deletes) | works locally |
 
 Notes:
@@ -126,7 +126,12 @@ Notes:
 * Tested locally: no id, bad JSON, `null`, an array, `{}` and `{"pk":"x"}` each give 400. An unknown id gives 404. A throwaway draft `zz-test` gives 200, with `title` and `name` updated and `gsi1sk` unchanged.
 * `gsi1sk` holds the page id, not the title (see `seed/home-draft.json`), so a title change does not touch it. The old plan to update `gsi1sk` on a title change is dropped.
 
+* `publish-page` (2026-11-02, written by Claude at Peter's request) gets the DRAFT (404 when missing), drops `sk`, `gsi1pk` and `gsi1sk`, and puts the copy as `PUBLISHED`. The put replaces the old published item. With no `gsi1pk`, the published item stays out of `gsi1`. Tested with a stubbed `send`: no id gives 400, a missing draft gives 404 with no put, and a draft gives 200 with the right put item. Not yet run against the real table.
+* Publish parts that need schemas come later: strict validation (R11), removing hidden fields (R13), the AI SEO step (R12) and the revalidate webhook (R14).
+* Page creation is not a route: a schema deploy creates its page (R4). The page Lambdas are complete for now.
+
 ## Next
 
-* Write the publish route (a new pattern, by hand).
+* Run `publish-page` against the real table on a throwaway draft.
+* Start the schema work: `SchemaTable`, the schema files and the deploy step (Peter writes the new patterns).
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes.
