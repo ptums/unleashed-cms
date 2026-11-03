@@ -7,7 +7,8 @@
     "test": "jest",
     "cdk": "cdk",
     "dev": "tsx scripts/dev-server.ts",
-    "sync": "tsx scripts/sync-schemas.ts"
+    "sync": "tsx scripts/sync-schemas.ts",
+    "json-to-zod": "tsx scripts/json-to-zod.ts"
   },
   "devDependencies": {
     "@swc/core": "^1.15.0",
