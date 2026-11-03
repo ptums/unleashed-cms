@@ -115,6 +115,7 @@ Login decision: Clerk, not Cognito (REQUIREMENTS R16, R17). An API Gateway JWT a
 | `PUT /admin/pages/{id}` | `lambda/put-pages.ts` | `UpdateItem` (DRAFT) | works locally |
 | `POST /admin/pages/{id}/publish` | `lambda/publish-page.ts` | `GetItem` (DRAFT) + `PutItem` (PUBLISHED) | works with a stub client |
 | `DELETE /admin/pages/{id}` | `lambda/delete-page.ts` | `TransactWrite` (2 deletes) | works locally |
+| `GET /admin/schemas/{id}` | `lambda/get-schema.ts` | `GetItem` (LATEST, on `SchemaTable`) | works locally |
 
 Notes:
 
@@ -148,5 +149,4 @@ Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --
 
 * Run `publish-page` against the real table on a throwaway draft.
 * Run the sync script with `CONTENT_TABLE_NAME` against the real tables.
-* The admin Lambda that reads a schema (`GET /admin/schemas/{id}`), for the edit form.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes.
