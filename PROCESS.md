@@ -100,6 +100,10 @@ Result: the main table holds 2 Home items (DRAFT and PUBLISHED), and the index h
 8. **Clean the response:** `const { pk, sk, ...page } = Item;` sends only the page fields. Verified: `{"title":"Home"}`.
 9. **Set the content type:** each return sends `content-type: application/json`. Verified on the 200 and the 404.
 
+## Cost tag (2026-10-29)
+
+The day after the first deploy, `aws ce list-cost-allocation-tags --tag-keys project` showed `UserDefined Inactive`. `aws ce update-cost-allocation-tags-status --cost-allocation-tags-status TagKey=project,Status=Active` turned it on. Verified: the status is `Active`.
+
 ## Step 6: the admin routes (started 2026-10-28)
 
 Login decision: Clerk, not Cognito (REQUIREMENTS R16, R17). An API Gateway JWT authorizer will check the Clerk token. Until it exists, admin routes are built and tested locally only, never deployed.
@@ -108,7 +112,7 @@ Login decision: Clerk, not Cognito (REQUIREMENTS R16, R17). An API Gateway JWT a
 |-------|---------|---------------|--------|
 | `GET /admin/pages` | `lambda/list-pages.ts` | `Query` on `gsi1` | works locally |
 | `GET /admin/pages/{id}` | `lambda/get-draft.ts` | `GetItem` (DRAFT) | works locally |
-| `PUT /admin/pages/{id}` | `lambda/put-pages.ts` | `UpdateItem` | planned |
+| `PUT /admin/pages/{id}` | `lambda/put-pages.ts` | `UpdateItem` (DRAFT) | works locally |
 | `POST /admin/pages/{id}/publish` | not started | `GetItem` + `PutItem` | planned |
 | `DELETE /admin/pages/{id}` | `lambda/delete-page.ts` | `TransactWrite` (2 deletes) | works locally |
 
@@ -118,10 +122,11 @@ Notes:
 * `delete-page` deletes the DRAFT and PUBLISHED items in 1 transaction. A condition on the draft makes an unknown id fail (404), and nothing is deleted. Tested on throwaway pages: 204, then 404, and a draft-only page gives 204.
 * Who writes what: I write each new pattern by hand. Claude takes over repeat work (more CRUD routes on a known pattern) and the admin UI.
 * `list-pages` builds each `id` from `pk` with `.replace(/^PAGE#/, "")`.
-* The update plan: parse the body (400 on bad JSON), block `pk`, `sk`, `gsi1pk` and `gsi1sk`, build `SET #f0 = :v0, ...`, set `gsi1sk` when the title changes, and use `attribute_exists(pk)` so an unknown id never makes a new page.
+* `put-pages` (2026-11-02) edits the DRAFT only. It parses the body, then returns 400 for bad JSON, a body that is not a plain object (`null`, arrays, strings), an empty object, or a blocked key (`pk`, `sk`, `gsi1pk`, `gsi1sk`). It builds `SET #f0 = :v0, ...` with a loop over the body keys, so reserved words such as `name` are safe. `attribute_exists(pk)` makes an unknown id fail with `ConditionalCheckFailedException`, which returns 404, so an update never makes a new page.
+* Tested locally: no id, bad JSON, `null`, an array, `{}` and `{"pk":"x"}` each give 400. An unknown id gives 404. A throwaway draft `zz-test` gives 200, with `title` and `name` updated and `gsi1sk` unchanged.
+* `gsi1sk` holds the page id, not the title (see `seed/home-draft.json`), so a title change does not touch it. The old plan to update `gsi1sk` on a title change is dropped.
 
 ## Next
 
-* Finish the update route, then the publish route.
+* Write the publish route (a new pattern, by hand).
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes.
-* Turn on the `project` cost allocation tag (it shows in Billing up to 24 hours after the first tagged resource).
