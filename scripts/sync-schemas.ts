@@ -51,7 +51,9 @@ async function main() {
       throw new Error(id);
     }
 
-    const json = z.toJSONSchema(schema);
+    // "input" mode: a field with a default stays optional, as in the JSON source.
+    // The default "output" mode marks it required, and Ajv then rejects data that leaves it out.
+    const json = z.toJSONSchema(schema, { io: "input" });
     const cms = json["x-cms"] as { kind?: string } | undefined;
 
     if (cms?.kind === "singleton") {

@@ -160,7 +160,21 @@ This also verified `publish-page` and the sync's draft-page part on the real tab
 
 Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --force` downgrade) and caused all the critical and high audit issues. Back on Jest 30, there are 0 critical and 0 high. Do not run `npm audit fix --force` here.
 
+## Step 9: the admin UI (2026-11-02, built by Claude)
+
+`admin/` is its own Vite + React 19 + TypeScript app (N9), with Tailwind 4 and the `@rjsf/shadcn` theme for react-jsonschema-form 6.
+
+* **Run it:** start the API (`npm run dev` in the repo root), then `cd admin && npm run dev`, and open `http://localhost:5173`. Vite sends `/api/*` to the API on port 3001, so there is no CORS in dev.
+* **Page list (R9):** the side bar lists the pages from `GET /admin/pages`. The selected page is in the URL (`#/pages/<id>`).
+* **Edit form:** built from the page's `LATEST` schema. `src/uiSchema.ts` turns the `x-cms` and `x-ui` hints into the RJSF uiSchema: zones are ordered by `x-cms.zones`, and `textarea`, `markdown` and `referenceList` hints map to RJSF widgets. `image` uses the default object form until an upload widget exists.
+* **Save draft (R10):** no validation, so an incomplete draft saves. Only the schema's own fields are sent.
+* **Publish (R11):** strict validation runs first with Ajv 2020. If it fails, the fields are marked and nothing is saved or published. If it passes, the draft is saved, then published.
+* **Sync fix:** `z.toJSONSchema` now runs in `io: "input"` mode. The default mode marked every field with a default as required, so Ajv rejected valid data (the clinician profile example failed on `year`). All 9 schemas were re-synced (Home is version 7), and all 9 JSON examples now pass the UI's validator.
+* Checked in a browser by Peter: the page list, the Home form and Save draft work.
+* Limits: clearing a top-level field does not remove it (`put-pages` only sets fields), collections have no entry list yet, and there is no image upload.
+
 ## Next
 
-* The admin UI (option 2): Vite + React app with the page list and a react-jsonschema-form edit form, against the dev server.
-* Make the Clerk app, then add the JWT authorizer and deploy the admin routes.
+* The AI step that drafts SEO metadata for a blog post (R12). Peter writes it.
+* Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
+* Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.

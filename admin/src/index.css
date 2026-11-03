@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* The RJSF shadcn theme ships its class names in node_modules, so Tailwind must scan it. */
+@source "../node_modules/@rjsf/shadcn";
+
+/* shadcn tokens, tuned to the practice palette (linen, forest). */
+:root {
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.24 0.02 150);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.02 150);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.02 150);
+  --primary: oklch(0.36 0.05 155);
+  --primary-foreground: oklch(0.985 0.006 85);
+  --secondary: oklch(0.95 0.012 85);
+  --secondary-foreground: oklch(0.3 0.03 150);
+  --muted: oklch(0.95 0.012 85);
+  --muted-foreground: oklch(0.5 0.02 150);
+  --accent: oklch(0.93 0.02 120);
+  --accent-foreground: oklch(0.3 0.03 150);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9 0.012 85);
+  --input: oklch(0.88 0.012 85);
+  --ring: oklch(0.55 0.05 155);
+  --radius: 0.5rem;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}

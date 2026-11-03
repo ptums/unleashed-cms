@@ -15,3 +15,6 @@ cdk.out
 cmds.txt
 # macOS
 .DS_Store
+
+# Admin UI build output
+admin/dist
