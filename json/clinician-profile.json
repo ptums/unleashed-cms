@@ -1,0 +1,964 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clinician Profile",
+  "description": "One entry per clinician. Layout is fixed by the template; each top-level property is one zone. Open appointment times are fetched live from the scheduling system using the booking zone; they are not stored here. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "collection",
+    "route": "/clinicians/{slug}",
+    "template": "ClinicianProfilePage",
+    "zones": [
+      "profileHeader",
+      "booking",
+      "approach",
+      "credentials",
+      "fees",
+      "featuredIn",
+      "closingCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "profileHeader",
+    "booking",
+    "approach",
+    "credentials",
+    "fees",
+    "featuredIn",
+    "closingCta",
+    "seo"
+  ],
+  "properties": {
+    "profileHeader": {
+      "type": "object",
+      "title": "Profile header",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "profileHeader",
+        "order": 1
+      },
+      "required": [
+        "displayName",
+        "firstName",
+        "roleLine",
+        "portrait",
+        "summary",
+        "languages",
+        "specialties"
+      ],
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Name with credentials, e.g. Jess Rebelo, LCSW. The page's only H1."
+        },
+        "firstName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Used in labels such as Book with {firstName}."
+        },
+        "roleLine": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Small caps line above the name, e.g. Founder · Licensed Clinical Social Worker."
+        },
+        "portrait": {
+          "$ref": "#/$defs/image",
+          "description": "Portrait (3:4)."
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280,
+          "description": "Intro under the name. Also used on clinician cards.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
+        },
+        "ages": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "e.g. Adults 18+"
+        },
+        "sessionsLine": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Where and how they see clients, e.g. In person in [City] · Online in [State]."
+        },
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          }
+        },
+        "specialties": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "x-ui": {
+            "widget": "referenceList",
+            "collection": "specialties",
+            "sortable": true
+          },
+          "description": "Shown as chips. Also lists this clinician on each specialty page."
+        }
+      }
+    },
+    "booking": {
+      "type": "object",
+      "title": "Booking card",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "booking",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "acceptingNewClients",
+        "heading",
+        "slotsShown",
+        "ctaLabel",
+        "provider",
+        "externalCalendarId",
+        "defaultSessionTypeKey"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "acceptingNewClients": {
+          "type": "boolean",
+          "default": true,
+          "description": "When false, the open times are replaced by the waitlist message."
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Book with {firstName}",
+          "description": "Supports the {firstName} token."
+        },
+        "subhead": {
+          "type": "string",
+          "maxLength": 140,
+          "default": "Free 15-minute consultation. Choose a time to begin."
+        },
+        "slotsLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Next open times · ET"
+        },
+        "slotsShown": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 12,
+          "default": 6
+        },
+        "ctaLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "default": "Book a Consultation"
+        },
+        "allTimesLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "See all open times"
+        },
+        "waitlistMessage": {
+          "type": "string",
+          "maxLength": 200,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "simplepractice",
+            "jane",
+            "acuity",
+            "calendly",
+            "custom"
+          ]
+        },
+        "externalCalendarId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Internal. Never rendered."
+        },
+        "defaultSessionTypeKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "default": "consultation",
+          "description": "Must match a key in the fees zone. Usually the free consultation.",
+          "pattern": "^[a-z0-9_]+$"
+        }
+      },
+      "description": "Booking starts only here. Keep hidden false unless the clinician is not taking clients at all."
+    },
+    "approach": {
+      "type": "object",
+      "title": "Approach",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "approach",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "body"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Approach"
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1500,
+          "contentMediaType": "text/markdown",
+          "x-ui": {
+            "widget": "markdown",
+            "toolbar": [
+              "bold",
+              "italic",
+              "link",
+              "bulletList"
+            ]
+          }
+        }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "title": "Credentials",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "credentials",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "licenses"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Credentials"
+        },
+        "education": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "degree",
+              "institution"
+            ],
+            "properties": {
+              "degree": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "institution": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "year": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1950,
+                "maximum": 2100,
+                "default": null
+              }
+            }
+          }
+        },
+        "licenses": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "state",
+              "number"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12,
+                "description": "e.g. LCSW, LMHC, LMFT"
+              },
+              "state": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 2,
+                "description": "Two-letter state code.",
+                "pattern": "^[A-Z]{2}$"
+              },
+              "number": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 30
+              }
+            }
+          },
+          "description": "Shown publicly; many state boards require the license number."
+        },
+        "trainings": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "provider": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "year": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1950,
+                "maximum": 2100,
+                "default": null
+              }
+            }
+          }
+        },
+        "practicingSince": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1950,
+          "maximum": 2100,
+          "default": null
+        }
+      }
+    },
+    "fees": {
+      "type": "object",
+      "title": "Fees & insurance",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "fees",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "caption",
+        "sessionTypes",
+        "insuranceStatus",
+        "showGoodFaithEstimateNotice"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Fees & insurance"
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Self-pay rates, per session"
+        },
+        "sessionTypes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/sessionType"
+          },
+          "description": "Rows of the fee table, in order."
+        },
+        "insuranceStatus": {
+          "type": "string",
+          "enum": [
+            "in_network",
+            "out_of_network",
+            "both",
+            "self_pay_only"
+          ]
+        },
+        "insuranceNote": {
+          "type": "string",
+          "maxLength": 300,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
+        },
+        "superbills": {
+          "type": "boolean",
+          "default": true
+        },
+        "slidingScale": {
+          "type": "boolean",
+          "default": false
+        },
+        "showGoodFaithEstimateNotice": {
+          "type": "boolean",
+          "default": true,
+          "description": "No Surprises Act notice for self-pay clients."
+        }
+      }
+    },
+    "featuredIn": {
+      "type": "object",
+      "title": "Featured in",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "featuredIn",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "appearances"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Featured in"
+        },
+        "appearances": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "x-ui": {
+            "widget": "referenceList",
+            "collection": "mediaAppearances",
+            "sortable": true
+          }
+        },
+        "allLink": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "All podcasts & press",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "featured-in"
+              }
+            }
+          }
+        }
+      }
+    },
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "closingCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "ctaLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 80,
+          "default": null,
+          "description": "Leave empty to show the next open time, e.g. Next open: Thu, Oct 29 · 10:00 AM."
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 140,
+          "default": "Free 15-minute consultation with {firstName}."
+        },
+        "ctaLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "default": "Book a Consultation"
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "sessionType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "label",
+        "minMinutes",
+        "price",
+        "bookableOnline"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "description": "Stable id used by booking, e.g. consultation.",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "minMinutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 240
+        },
+        "maxMinutes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 5,
+          "maximum": 240,
+          "default": null,
+          "description": "Set for a range, e.g. 60–75. Leave empty for a fixed length."
+        },
+        "price": {
+          "oneOf": [
+            {
+              "type": "string",
+              "const": "free"
+            },
+            {
+              "type": "string",
+              "const": "contact"
+            },
+            {
+              "$ref": "#/$defs/money"
+            }
+          ]
+        },
+        "bookableOnline": {
+          "type": "boolean",
+          "default": false,
+          "description": "Offered in booking step 1."
+        },
+        "modes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "video",
+              "phone"
+            ]
+          }
+        }
+      }
+    },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amountCents",
+        "currency"
+      ],
+      "properties": {
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "const": "USD"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "profileHeader": {
+        "displayName": "Jess Rebelo, LCSW",
+        "firstName": "Jess",
+        "roleLine": "Founder · Licensed Clinical Social Worker",
+        "portrait": {
+          "assetId": "[asset-id]",
+          "alt": "Jess Rebelo standing outdoors in natural light"
+        },
+        "summary": "Trauma therapist and EMDR clinician. Jess works with adults who are recovering from abusive relationships, childhood harm and loss.",
+        "ages": "Adults 18+",
+        "sessionsLine": "In person in [City] · Online in [State]",
+        "languages": [
+          "English"
+        ],
+        "specialties": [
+          {
+            "collection": "specialties",
+            "id": "emdr"
+          },
+          {
+            "collection": "specialties",
+            "id": "trauma-ptsd"
+          },
+          {
+            "collection": "specialties",
+            "id": "relationships"
+          },
+          {
+            "collection": "specialties",
+            "id": "grief-loss"
+          },
+          {
+            "collection": "specialties",
+            "id": "domestic-violence-recovery"
+          }
+        ]
+      },
+      "booking": {
+        "hidden": false,
+        "acceptingNewClients": true,
+        "heading": "Book with {firstName}",
+        "subhead": "Free 15-minute consultation. Choose a time to begin.",
+        "slotsLabel": "Next open times · ET",
+        "slotsShown": 6,
+        "ctaLabel": "Book a Consultation",
+        "allTimesLabel": "See all open times",
+        "provider": "simplepractice",
+        "externalCalendarId": "[calendar-id]",
+        "defaultSessionTypeKey": "consultation"
+      },
+      "approach": {
+        "hidden": false,
+        "heading": "Approach",
+        "body": "Jess begins with stabilization: clear tools for sleep, triggers and daily stress. Once you feel ready, she uses EMDR and cognitive approaches to process what still hurts.\n\nSessions are structured but unhurried. You set the pace, and you always know what comes next."
+      },
+      "credentials": {
+        "hidden": false,
+        "heading": "Credentials",
+        "education": [
+          {
+            "degree": "MSW",
+            "institution": "Stony Brook University"
+          }
+        ],
+        "licenses": [
+          {
+            "type": "LCSW",
+            "state": "NY",
+            "number": "[License no.]"
+          }
+        ],
+        "trainings": [
+          {
+            "name": "EMDR",
+            "provider": "[Training body]"
+          }
+        ],
+        "practicingSince": null
+      },
+      "fees": {
+        "hidden": false,
+        "heading": "Fees & insurance",
+        "caption": "Self-pay rates, per session",
+        "sessionTypes": [
+          {
+            "key": "consultation",
+            "label": "Consultation",
+            "minMinutes": 15,
+            "price": "free",
+            "bookableOnline": true,
+            "modes": [
+              "video",
+              "phone"
+            ]
+          },
+          {
+            "key": "assessment",
+            "label": "Assessment",
+            "minMinutes": 60,
+            "maxMinutes": 75,
+            "price": "contact",
+            "bookableOnline": false,
+            "modes": [
+              "in_person",
+              "video"
+            ]
+          },
+          {
+            "key": "ongoing",
+            "label": "Ongoing session",
+            "minMinutes": 45,
+            "maxMinutes": 60,
+            "price": "contact",
+            "bookableOnline": false,
+            "modes": [
+              "in_person",
+              "video"
+            ]
+          }
+        ],
+        "insuranceStatus": "out_of_network",
+        "insuranceNote": "[Insurance details]",
+        "superbills": true,
+        "slidingScale": false,
+        "showGoodFaithEstimateNotice": true
+      },
+      "featuredIn": {
+        "hidden": false,
+        "heading": "Featured in",
+        "appearances": [
+          {
+            "collection": "mediaAppearances",
+            "id": "womlead-self-worth"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "female-founders-ep-77"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "youtube-interview"
+          }
+        ],
+        "allLink": {
+          "label": "All podcasts & press",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "featured-in"
+            }
+          }
+        }
+      },
+      "closingCta": {
+        "hidden": false,
+        "heading": null,
+        "body": "Free 15-minute consultation with {firstName}.",
+        "ctaLabel": "Book a Consultation"
+      },
+      "seo": {
+        "title": "Jess Rebelo, LCSW · Trauma & EMDR Therapist",
+        "description": "Jess Rebelo is a licensed clinical social worker specializing in trauma and EMDR. In person in [City] and online. Book a free consultation.",
+        "noindex": false
+      }
+    }
+  ]
+}

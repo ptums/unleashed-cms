@@ -1,0 +1,516 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Blog Post",
+  "description": "One entry per article. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "collection",
+    "route": "/blog/{slug}",
+    "template": "BlogPostPage",
+    "zones": [
+      "articleHeader",
+      "body",
+      "crisisCallout",
+      "authorBox",
+      "related",
+      "closingCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "articleHeader",
+    "body",
+    "crisisCallout",
+    "authorBox",
+    "related",
+    "closingCta",
+    "seo"
+  ],
+  "properties": {
+    "articleHeader": {
+      "type": "object",
+      "title": "Article header",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "articleHeader",
+        "order": 1
+      },
+      "required": [
+        "topic",
+        "heading",
+        "dek",
+        "author",
+        "publishDate",
+        "readMinutes",
+        "image"
+      ],
+      "properties": {
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "description": "Must match a topic on the blog page."
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The page's only H1."
+        },
+        "dek": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "One-sentence summary under the title. Also used on cards.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        },
+        "author": {
+          "$ref": "#/$defs/reference",
+          "description": "The author's clinician entry. Name and credentials come from there."
+        },
+        "publishDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "readMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "image": {
+          "$ref": "#/$defs/image",
+          "description": "Wide photo (21:9). Also used on cards."
+        }
+      }
+    },
+    "body": {
+      "type": "object",
+      "title": "Article body",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "body",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "content"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+          "description": "Use H2 and H3 only; the title is the H1.",
+          "contentMediaType": "text/markdown",
+          "x-ui": {
+            "widget": "markdown",
+            "toolbar": [
+              "heading2",
+              "heading3",
+              "bold",
+              "italic",
+              "link",
+              "bulletList",
+              "numberedList",
+              "quote"
+            ]
+          }
+        }
+      },
+      "description": "Keep hidden false."
+    },
+    "crisisCallout": {
+      "type": "object",
+      "title": "Crisis callout",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "crisisCallout",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "body"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "If you are in crisis"
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        }
+      },
+      "description": "Recommended on every post about trauma, grief or mental health."
+    },
+    "authorBox": {
+      "type": "object",
+      "title": "Author box",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "authorBox",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "linkLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Overrides the clinician's summary when filled.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        },
+        "linkLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "View profile & open times"
+        }
+      }
+    },
+    "related": {
+      "type": "object",
+      "title": "Keep reading",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "related",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "mode",
+        "allLink"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Keep reading"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "manual"
+          ],
+          "default": "auto",
+          "description": "auto picks recent posts on the same topic."
+        },
+        "posts": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "x-ui": {
+            "widget": "referenceList",
+            "collection": "blogPosts",
+            "sortable": true
+          },
+          "description": "Used only when mode is manual."
+        },
+        "allLink": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "All articles",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "blog"
+              }
+            }
+          }
+        }
+      }
+    },
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "closingCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "cta"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "description": "Must go to the clinicians list or a profile, never straight to booking.",
+          "default": {
+            "label": "Book a Consultation",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "clinicians"
+              }
+            }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "articleHeader": {
+        "topic": "Trauma",
+        "heading": "Grounding skills you can use between sessions",
+        "dek": "Four simple techniques to steady your body when a memory or a hard day pulls you off balance.",
+        "author": {
+          "collection": "clinicians",
+          "id": "jess-rebelo"
+        },
+        "publishDate": "2026-10-14",
+        "readMinutes": 6,
+        "image": {
+          "assetId": "[asset-id]",
+          "alt": "Hands around a mug by a window in soft light"
+        }
+      },
+      "body": {
+        "hidden": false,
+        "content": "Therapy happens in a session, but most of life happens between them. When a reminder of the past lands hard, your body can react before your mind catches up: a racing heart, shallow breath, a sense of being far away. Grounding brings your attention back to the present, where you are safe enough to think clearly.\n\nThese skills do not erase what happened. They give you a way to steady yourself so you can get through the moment.\n\n## 1. Name what is around you\n\nSlowly notice five things you can see, four you can touch, three you can hear, two you can smell and one you can taste. Say them out loud if you can.\n\n## 2. Lengthen the exhale\n\nBreathe in through your nose for a count of four, then out for a count of six. Five rounds is enough to notice a change.\n\n> The goal is not to feel calm. It is to feel here.\n\n## 3. Orient to the room\n\nTurn your head slowly and let your eyes rest on ordinary objects. Then tell yourself three facts: where you are, today’s date, and how old you are.\n\n## 4. Feel the support under you\n\nPress your feet into the floor. Notice the chair or bed holding your weight. Let your shoulders drop as you exhale.\n\n## When to reach out\n\nPractice these when you feel fine, so they are familiar when you need them. If they stop helping, or you find yourself avoiding more of your life, that is a good time to talk with a clinician."
+      },
+      "crisisCallout": {
+        "hidden": false,
+        "heading": "If you are in crisis",
+        "body": "Call or text 988 to reach the Suicide & Crisis Lifeline, or call 911. This article is educational and not a substitute for care."
+      },
+      "authorBox": {
+        "hidden": false,
+        "bio": "Founder of [Practice name]. Jess specializes in trauma and EMDR.",
+        "linkLabel": "View profile & open times"
+      },
+      "related": {
+        "hidden": false,
+        "heading": "Keep reading",
+        "mode": "auto",
+        "allLink": {
+          "label": "All articles",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "blog"
+            }
+          }
+        }
+      },
+      "closingCta": {
+        "hidden": false,
+        "heading": "Want help building these skills?",
+        "body": "Start with a free 15-minute consultation.",
+        "cta": {
+          "label": "Book a Consultation",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "clinicians"
+            }
+          }
+        }
+      },
+      "seo": {
+        "title": "Grounding Skills You Can Use Between Sessions",
+        "description": "Four simple grounding techniques to steady your body when a memory or a hard day pulls you off balance.",
+        "noindex": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,697 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Booking",
+  "description": "Copy for the 3-step booking flow. Times, clinician, session types and fees come from the clinician entry and the scheduling system, not from here. Only one step shows at a time; the visible step's heading is the page's H1. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "route": "/book",
+    "template": "BookingFlowPage",
+    "zones": [
+      "stepTime",
+      "stepDetails",
+      "stepConfirmed",
+      "summaryPanel",
+      "meta"
+    ]
+  },
+  "required": [
+    "stepTime",
+    "stepDetails",
+    "stepConfirmed",
+    "summaryPanel",
+    "seo"
+  ],
+  "properties": {
+    "stepTime": {
+      "type": "object",
+      "title": "Step 1: time",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "stepTime",
+        "order": 1
+      },
+      "required": [
+        "progressLabel",
+        "heading",
+        "slotsLegend",
+        "formatLegend",
+        "videoLabel",
+        "phoneLabel",
+        "continueLabel"
+      ],
+      "properties": {
+        "progressLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "default": "Time"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Choose a time",
+          "description": "The page's only H1."
+        },
+        "intro": {
+          "type": "string",
+          "maxLength": 160,
+          "default": "Times are Eastern. The consultation is free and has no obligation."
+        },
+        "slotsLegend": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Open times with {firstName}"
+        },
+        "formatLegend": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "How would you like to meet?"
+        },
+        "videoLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "default": "Video call"
+        },
+        "phoneLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "default": "Phone call"
+        },
+        "continueLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Continue to your details"
+        }
+      }
+    },
+    "stepDetails": {
+      "type": "object",
+      "title": "Step 2: details",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "stepDetails",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "progressLabel",
+        "heading",
+        "nameLabel",
+        "emailLabel",
+        "phoneLabel",
+        "payLegend",
+        "payOptions",
+        "consentText",
+        "errors",
+        "submitLabel",
+        "backLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "progressLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "default": "Your details"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Your details",
+          "description": "Becomes the H1 while this step is shown."
+        },
+        "intro": {
+          "type": "string",
+          "maxLength": 160,
+          "default": "Used only to confirm your appointment."
+        },
+        "nameLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Full name"
+        },
+        "emailLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Email"
+        },
+        "emailHint": {
+          "type": "string",
+          "maxLength": 120,
+          "default": "We send your confirmation and intake forms here."
+        },
+        "phoneLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Phone"
+        },
+        "payLegend": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "How do you plan to pay?"
+        },
+        "payOptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selfPay",
+            "insurance",
+            "unsure"
+          ],
+          "properties": {
+            "selfPay": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "default": "Self-pay"
+            },
+            "insurance": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "default": "Insurance"
+            },
+            "unsure": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "default": "Not sure yet"
+            }
+          }
+        },
+        "consentText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "description": "Checkbox text. Must mention that the practice is not an emergency service and point to 988.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "summary",
+            "name",
+            "email",
+            "phone",
+            "consent"
+          ],
+          "description": "Shown as text under each field. Each starts with Error: so it is not signaled by color alone.",
+          "properties": {
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "default": "Please fix {count} to continue."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "default": "Error: enter your full name."
+            },
+            "email": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "default": "Error: enter an email address like name@example.com."
+            },
+            "phone": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "default": "Error: enter a phone number we can reach you on."
+            },
+            "consent": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "default": "Error: please confirm to continue."
+            }
+          }
+        },
+        "submitLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Confirm booking"
+        },
+        "backLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "default": "Back"
+        }
+      },
+      "description": "Required for booking. Keep hidden false."
+    },
+    "stepConfirmed": {
+      "type": "object",
+      "title": "Step 3: confirmation",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "stepConfirmed",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "progressLabel",
+        "heading",
+        "summary",
+        "calendarHeading",
+        "calendarLabels",
+        "nextStepsHeading",
+        "nextSteps",
+        "changePolicy",
+        "homeLink"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "progressLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "default": "Confirmed"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "You’re booked.",
+          "description": "Becomes the H1 while this step is shown."
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "default": "Your consultation with {firstName} is on {time}, by {format}.",
+          "description": "Tokens: {firstName}, {time}, {format}."
+        },
+        "calendarHeading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Add to your calendar"
+        },
+        "calendarLabels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "google",
+            "apple",
+            "outlook"
+          ],
+          "properties": {
+            "google": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "default": "Google Calendar"
+            },
+            "apple": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "default": "Apple (.ics)"
+            },
+            "outlook": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "default": "Outlook"
+            }
+          }
+        },
+        "nextStepsHeading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "What happens next"
+        },
+        "nextSteps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": "Tokens: {email}, {firstName}, {phone}."
+        },
+        "changePolicy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        },
+        "homeLink": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Return to home",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "home"
+              }
+            }
+          }
+        }
+      },
+      "description": "Required for booking. Keep hidden false."
+    },
+    "summaryPanel": {
+      "type": "object",
+      "title": "Booking summary panel",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "summaryPanel",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "rowLabels",
+        "changeLabel",
+        "exitLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Your booking"
+        },
+        "rowLabels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "session",
+            "time",
+            "format",
+            "cost"
+          ],
+          "properties": {
+            "session": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20,
+              "default": "Session"
+            },
+            "time": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20,
+              "default": "Time"
+            },
+            "format": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20,
+              "default": "Format"
+            },
+            "cost": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20,
+              "default": "Cost"
+            }
+          }
+        },
+        "changeLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Change time or format"
+        },
+        "exitLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Back to {firstName}’s profile",
+          "description": "Link in the booking header."
+        }
+      },
+      "description": "Shows the chosen clinician and time on every step. Keep hidden false."
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "stepTime": {
+        "progressLabel": "Time",
+        "heading": "Choose a time",
+        "intro": "Times are Eastern. The consultation is free and has no obligation.",
+        "slotsLegend": "Open times with {firstName}",
+        "formatLegend": "How would you like to meet?",
+        "videoLabel": "Video call",
+        "phoneLabel": "Phone call",
+        "continueLabel": "Continue to your details"
+      },
+      "stepDetails": {
+        "hidden": false,
+        "progressLabel": "Your details",
+        "heading": "Your details",
+        "intro": "Used only to confirm your appointment.",
+        "nameLabel": "Full name",
+        "emailLabel": "Email",
+        "emailHint": "We send your confirmation and intake forms here.",
+        "phoneLabel": "Phone",
+        "payLegend": "How do you plan to pay?",
+        "payOptions": {
+          "selfPay": "Self-pay",
+          "insurance": "Insurance",
+          "unsure": "Not sure yet"
+        },
+        "consentText": "I understand this practice is not an emergency service. In a crisis I will call or text 988.",
+        "errors": {
+          "summary": "Please fix {count} to continue.",
+          "name": "Error: enter your full name.",
+          "email": "Error: enter an email address like name@example.com.",
+          "phone": "Error: enter a phone number we can reach you on.",
+          "consent": "Error: please confirm to continue."
+        },
+        "submitLabel": "Confirm booking",
+        "backLabel": "Back"
+      },
+      "stepConfirmed": {
+        "hidden": false,
+        "progressLabel": "Confirmed",
+        "heading": "You’re booked.",
+        "summary": "Your consultation with {firstName} is on {time}, by {format}.",
+        "calendarHeading": "Add to your calendar",
+        "calendarLabels": {
+          "google": "Google Calendar",
+          "apple": "Apple (.ics)",
+          "outlook": "Outlook"
+        },
+        "nextStepsHeading": "What happens next",
+        "nextSteps": [
+          "A confirmation goes to {email} within a few minutes, with your secure video link.",
+          "{firstName} will join the video call at the scheduled time.",
+          "If you both agree it is a good fit, you will book your assessment together."
+        ],
+        "changePolicy": "Need to change or cancel? Use the link in your email, or call [Phone], at least 24 hours ahead.",
+        "homeLink": {
+          "label": "Return to home",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "home"
+            }
+          }
+        }
+      },
+      "summaryPanel": {
+        "hidden": false,
+        "heading": "Your booking",
+        "rowLabels": {
+          "session": "Session",
+          "time": "Time",
+          "format": "Format",
+          "cost": "Cost"
+        },
+        "changeLabel": "Change time or format",
+        "exitLabel": "Back to {firstName}’s profile"
+      },
+      "seo": {
+        "title": "Book a Consultation",
+        "description": "Choose a time for a free 15-minute consultation.",
+        "noindex": true
+      }
+    }
+  ]
+}

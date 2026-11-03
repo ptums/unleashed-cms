@@ -1,151 +1,65 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://uptherapygroup.com/schemas/home-page.schema.json",
-  "title": "Home Page",
-  "description": "Singleton document for the Home page. The page is an ordered list of typed sections, so editors can reorder, hide or repeat sections. Header, footer and crisis line live in the global Site Settings document, not here. Clinician cards, specialty tiles and media logos are references to their own collections so they stay in sync with the profile, specialty and Featured In pages. Same conventions as clinician-profile.schema.json (x-cms, x-ui, $defs).",
+  "title": "Home",
+  "description": "Content for the Home page. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
   "type": "object",
+  "additionalProperties": false,
   "x-cms": {
-    "collection": "pages",
-    "singleton": true,
+    "kind": "singleton",
     "route": "/",
     "template": "HomePage",
-    "displayField": "internalTitle",
-    "globals": ["siteSettings"]
+    "zones": [
+      "hero",
+      "featuredIn",
+      "specialties",
+      "clinicians",
+      "howItWorks",
+      "approachBand",
+      "meta"
+    ]
   },
-  "required": ["id", "status", "internalTitle", "sections", "seo"],
-  "additionalProperties": false,
+  "required": [
+    "hero",
+    "featuredIn",
+    "specialties",
+    "clinicians",
+    "howItWorks",
+    "approachBand",
+    "seo"
+  ],
   "properties": {
-    "id": {
-      "type": "string",
-      "readOnly": true
-    },
-    "status": {
-      "type": "string",
-      "enum": ["draft", "in_review", "published"],
-      "default": "draft"
-    },
-    "internalTitle": {
-      "type": "string",
-      "default": "Home"
-    },
-    "sections": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 12,
-      "description": "Rendered top to bottom. Exactly one hero, and it must come first.",
-      "prefixItems": [
-        {
-          "$ref": "#/$defs/heroSection"
-        }
-      ],
-      "items": {
-        "$ref": "#/$defs/section"
-      },
-      "x-ui": {
-        "widget": "blockList",
-        "sortable": true,
-        "lockFirst": true
-      }
-    },
-    "seo": {
-      "$ref": "#/$defs/seo"
-    },
-    "updatedAt": {
-      "type": "string",
-      "format": "date-time",
-      "readOnly": true
-    },
-    "publishedAt": {
-      "type": "string",
-      "format": "date-time",
-      "readOnly": true
-    }
-  },
-  "$defs": {
-    "section": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/heroSection"
-        },
-        {
-          "$ref": "#/$defs/featuredInStrip"
-        },
-        {
-          "$ref": "#/$defs/specialtiesGrid"
-        },
-        {
-          "$ref": "#/$defs/cliniciansSection"
-        },
-        {
-          "$ref": "#/$defs/stepsSection"
-        },
-        {
-          "$ref": "#/$defs/statementBand"
-        },
-        {
-          "$ref": "#/$defs/textSection"
-        }
-      ]
-    },
-    "sectionBase": {
+    "hero": {
       "type": "object",
-      "required": ["type", "key"],
-      "properties": {
-        "key": {
-          "type": "string",
-          "pattern": "^[a-z0-9-]+$",
-          "description": "Stable id, also used as the HTML anchor (e.g. specialties for #specialties)."
-        },
-        "hidden": {
-          "type": "boolean",
-          "default": false
-        },
-        "background": {
-          "type": "string",
-          "enum": ["linen", "lightCream", "darkForest"],
-          "default": "linen",
-          "description": "Only these three keep text contrast at WCAG AA. Cream is never used for text."
-        }
-      }
-    },
-    "heroSection": {
       "title": "Hero",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
-      ],
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "hero",
+        "order": 1
+      },
       "required": [
-        "type",
-        "key",
         "eyebrow",
         "heading",
         "body",
         "primaryCta",
         "image"
       ],
-      "unevaluatedProperties": false,
       "properties": {
-        "type": {
-          "const": "hero"
-        },
-        "key": true,
-        "hidden": true,
-        "background": true,
         "eyebrow": {
           "type": "string",
+          "minLength": 1,
           "maxLength": 60,
-          "description": "Small caps line above the headline. Keep short so it wraps cleanly on mobile."
+          "description": "Small caps line above the heading. Keep it short so it wraps cleanly on mobile."
         },
         "heading": {
           "type": "string",
           "minLength": 1,
           "maxLength": 90,
-          "description": "The page's only H1. Required: an empty heading is not allowed."
+          "description": "The page's only H1."
         },
         "body": {
           "type": "string",
           "maxLength": 420,
+          "description": "Intro paragraph under the heading.",
           "x-ui": {
             "widget": "textarea",
             "rows": 4
@@ -153,50 +67,75 @@
         },
         "primaryCta": {
           "$ref": "#/$defs/link",
-          "description": "Outlined button. Must point to the clinicians list or a clinician profile, never straight to booking."
+          "description": "Outlined button. Must go to the clinicians list or a profile, never straight to booking.",
+          "default": {
+            "label": "Meet our clinicians",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "clinicians"
+              }
+            }
+          }
         },
         "secondaryLink": {
-          "$ref": "#/$defs/link"
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "What to expect",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "what-to-expect"
+              }
+            }
+          }
         },
         "trustLine": {
           "type": "array",
+          "minItems": 0,
           "maxItems": 4,
           "items": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 40
           },
-          "description": "Joined with a middle dot, e.g. Free 15-minute consultation · Licensed clinicians."
+          "description": "Short facts joined with a middle dot, e.g. Free 15-minute consultation."
         },
         "image": {
-          "$ref": "#/$defs/image"
+          "$ref": "#/$defs/image",
+          "description": "Portrait-format photo (4:5)."
         }
       }
     },
-    "featuredInStrip": {
+    "featuredIn": {
+      "type": "object",
       "title": "Featured in strip",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "featuredIn",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "label",
+        "appearances",
+        "allLink"
       ],
-      "required": ["type", "key", "label", "appearances"],
-      "unevaluatedProperties": false,
       "properties": {
-        "type": {
-          "const": "featuredIn"
+        "hidden": {
+          "type": "boolean",
+          "default": false
         },
-        "key": true,
-        "hidden": true,
-        "background": true,
         "label": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
           "default": "Featured in"
         },
         "appearances": {
           "type": "array",
           "minItems": 1,
           "maxItems": 6,
-          "description": "References to Media Appearance documents. Each renders as its outlet name linking to its primary URL.",
           "items": {
             "$ref": "#/$defs/reference"
           },
@@ -204,42 +143,59 @@
             "widget": "referenceList",
             "collection": "mediaAppearances",
             "sortable": true
-          }
+          },
+          "description": "Each shows its outlet name, linked to its main URL."
         },
         "allLink": {
-          "$ref": "#/$defs/link"
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "All podcasts & press",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "featured-in"
+              }
+            }
+          }
         }
       }
     },
-    "specialtiesGrid": {
+    "specialties": {
+      "type": "object",
       "title": "Specialties grid",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "specialties",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "items",
+        "tileLinkLabel"
       ],
-      "required": ["type", "key", "heading", "specialties"],
-      "unevaluatedProperties": false,
       "properties": {
-        "type": {
-          "const": "specialtiesGrid"
+        "hidden": {
+          "type": "boolean",
+          "default": false
         },
-        "key": true,
-        "hidden": true,
-        "background": true,
         "eyebrow": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
           "default": "Specialties"
         },
         "heading": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
           "default": "What we treat"
         },
-        "specialties": {
+        "items": {
           "type": "array",
           "minItems": 1,
           "maxItems": 9,
-          "description": "Tiles use each Specialty's name and short summary. A tile links to the specialty page when one is published, otherwise it renders without a link.",
           "items": {
             "$ref": "#/$defs/reference"
           },
@@ -247,322 +203,257 @@
             "widget": "referenceList",
             "collection": "specialties",
             "sortable": true
-          }
+          },
+          "description": "Tiles use each specialty's name and tile summary. A tile links only if its specialty page is published."
         },
         "tileLinkLabel": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
           "default": "Learn more"
         }
       }
     },
-    "cliniciansSection": {
+    "clinicians": {
+      "type": "object",
       "title": "Clinicians",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "clinicians",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "mode",
+        "limit",
+        "cardCtaLabel",
+        "recruitingCard"
       ],
-      "required": ["type", "key", "heading", "source"],
-      "unevaluatedProperties": false,
       "properties": {
-        "type": {
-          "const": "clinicians"
+        "hidden": {
+          "type": "boolean",
+          "default": false
         },
-        "key": true,
-        "hidden": true,
-        "background": true,
         "eyebrow": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
           "default": "Our clinicians"
         },
         "heading": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
           "default": "Choose your clinician, then your time."
         },
         "intro": {
           "type": "string",
-          "maxLength": 200
-        },
-        "source": {
-          "type": "object",
-          "required": ["mode"],
-          "additionalProperties": false,
-          "description": "auto = all published clinicians accepting new clients, by sortOrder. manual = the picked list.",
-          "properties": {
-            "mode": {
-              "type": "string",
-              "enum": ["auto", "manual"],
-              "default": "auto"
-            },
-            "clinicians": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/reference"
-              },
-              "x-ui": {
-                "widget": "referenceList",
-                "collection": "clinicians"
-              }
-            },
-            "limit": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 12,
-              "default": 6
-            }
+          "maxLength": 200,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
           }
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "manual"
+          ],
+          "default": "auto",
+          "description": "auto shows every published clinician accepting new clients, in their sort order. manual shows the list below."
+        },
+        "clinicians": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "x-ui": {
+            "widget": "referenceList",
+            "collection": "clinicians",
+            "sortable": true
+          },
+          "description": "Used only when mode is manual."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "default": 6
         },
         "cardCtaLabel": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
           "default": "View profile & times",
-          "description": "Card button always goes to the clinician's profile. Next open date is fetched live."
+          "description": "Card button always opens the clinician's profile. Next open date is fetched live."
         },
         "recruitingCard": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Optional card shown beside the clinicians, e.g. Our team is growing.",
+          "required": [
+            "hidden",
+            "heading",
+            "body",
+            "link"
+          ],
+          "description": "Card shown beside the clinicians while the team is growing.",
           "properties": {
-            "enabled": {
+            "hidden": {
               "type": "boolean",
-              "default": true
+              "default": false
             },
             "heading": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60,
+              "default": "Our team is growing."
             },
             "body": {
               "type": "string",
-              "maxLength": 200
+              "maxLength": 200,
+              "x-ui": {
+                "widget": "textarea",
+                "rows": 2
+              }
             },
             "link": {
-              "$ref": "#/$defs/link"
+              "$ref": "#/$defs/link",
+              "default": {
+                "label": "Careers",
+                "target": {
+                  "internal": {
+                    "collection": "pages",
+                    "id": "careers"
+                  }
+                }
+              }
             }
           }
         }
       }
     },
-    "stepsSection": {
-      "title": "Steps",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
+    "howItWorks": {
+      "type": "object",
+      "title": "How it works",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "howItWorks",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "steps",
+        "moreLink"
       ],
-      "required": ["type", "key", "heading", "steps"],
-      "unevaluatedProperties": false,
       "properties": {
-        "type": {
-          "const": "steps"
+        "hidden": {
+          "type": "boolean",
+          "default": false
         },
-        "key": true,
-        "hidden": true,
-        "background": true,
         "eyebrow": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
           "default": "How it works"
         },
         "heading": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
           "default": "Three steps to begin"
         },
         "steps": {
           "type": "array",
           "minItems": 2,
           "maxItems": 5,
-          "description": "Numbered automatically (01, 02, …).",
           "items": {
-            "type": "object",
-            "required": ["title", "body"],
-            "additionalProperties": false,
-            "properties": {
-              "title": {
-                "type": "string",
-                "maxLength": 40
-              },
-              "body": {
-                "type": "string",
-                "maxLength": 160
+            "$ref": "#/$defs/titledText"
+          },
+          "description": "Numbered automatically (01, 02, …)."
+        },
+        "moreLink": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "What to expect, in detail",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "what-to-expect"
               }
             }
           }
-        },
-        "moreLink": {
-          "$ref": "#/$defs/link"
         }
       }
     },
-    "statementBand": {
-      "title": "Statement band",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
+    "approachBand": {
+      "type": "object",
+      "title": "Approach statement band",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "approachBand",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "statement",
+        "cta"
       ],
-      "required": ["type", "key", "statement"],
-      "unevaluatedProperties": false,
       "properties": {
-        "type": {
-          "const": "statement"
-        },
-        "key": true,
-        "hidden": true,
-        "background": {
-          "type": "string",
-          "enum": ["darkForest", "lightCream"],
-          "default": "darkForest"
+        "hidden": {
+          "type": "boolean",
+          "default": false
         },
         "eyebrow": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Our approach"
         },
         "statement": {
           "type": "string",
-          "maxLength": 220,
-          "description": "Rendered large in Playfair italic. Not a client testimonial."
-        },
-        "cta": {
-          "$ref": "#/$defs/link"
-        }
-      }
-    },
-    "textSection": {
-      "title": "Text section",
-      "allOf": [
-        {
-          "$ref": "#/$defs/sectionBase"
-        }
-      ],
-      "required": ["type", "key", "heading", "body"],
-      "unevaluatedProperties": false,
-      "properties": {
-        "type": {
-          "const": "text"
-        },
-        "key": true,
-        "hidden": true,
-        "background": true,
-        "eyebrow": {
-          "type": "string"
-        },
-        "heading": {
-          "type": "string",
-          "maxLength": 80
-        },
-        "body": {
-          "$ref": "#/$defs/richText"
-        },
-        "cta": {
-          "$ref": "#/$defs/link"
-        }
-      }
-    },
-    "link": {
-      "type": "object",
-      "required": ["label", "target"],
-      "additionalProperties": false,
-      "properties": {
-        "label": {
-          "type": "string",
           "minLength": 1,
-          "maxLength": 40
+          "maxLength": 220,
+          "description": "Large italic statement on the dark band. Not a client testimonial.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
         },
-        "target": {
-          "oneOf": [
-            {
-              "type": "object",
-              "required": ["internal"],
-              "additionalProperties": false,
-              "properties": {
-                "internal": {
-                  "$ref": "#/$defs/reference"
-                },
-                "anchor": {
-                  "type": "string"
-                }
+        "cta": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Read our approach",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "our-approach"
               }
-            },
-            {
-              "type": "object",
-              "required": ["url"],
-              "additionalProperties": false,
-              "properties": {
-                "url": {
-                  "type": "string",
-                  "format": "uri"
-                }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "reference": {
-      "type": "object",
-      "required": ["collection", "id"],
-      "additionalProperties": false,
-      "properties": {
-        "collection": {
-          "type": "string",
-          "enum": [
-            "pages",
-            "clinicians",
-            "specialties",
-            "mediaAppearances",
-            "blogPosts"
-          ]
-        },
-        "id": {
-          "type": "string"
-        }
-      }
-    },
-    "image": {
-      "type": "object",
-      "required": ["assetId", "alt"],
-      "additionalProperties": false,
-      "properties": {
-        "assetId": {
-          "type": "string"
-        },
-        "alt": {
-          "type": "string",
-          "minLength": 5,
-          "maxLength": 160,
-          "description": "Required for WCAG."
-        },
-        "focalPoint": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "x": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
-            },
-            "y": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
             }
           }
         }
-      },
-      "x-ui": {
-        "widget": "image",
-        "aspectRatio": "4:5"
-      }
-    },
-    "richText": {
-      "type": "string",
-      "contentMediaType": "text/markdown",
-      "maxLength": 2000,
-      "x-ui": {
-        "widget": "markdown",
-        "toolbar": ["bold", "italic", "link", "bulletList"]
       }
     },
     "seo": {
       "type": "object",
-      "required": ["title", "description"],
+      "title": "SEO",
       "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
       "properties": {
         "title": {
           "type": "string",
@@ -582,191 +473,306 @@
       }
     }
   },
-  "examples": [
-    {
-      "id": "home",
-      "status": "draft",
-      "internalTitle": "Home",
-      "sections": [
-        {
-          "type": "hero",
-          "key": "hero",
-          "eyebrow": "Trauma-informed psychotherapy · Long Island, NY",
-          "heading": "A space to heal. The support to grow. The freedom to thrive.",
-          "body": "At Unleashed Potential Psychotherapy, we believe exceptional mental health care begins with feeling truly seen, heard, and understood. Through personalized evidence-based psychotherapy, we offer a thoughtful and compassionate approach to healing from trauma, rebuilding a sense of safety, and reclaiming the confidence and freedom to move forward in Long Island and online across New York.",
-          "primaryCta": {
-            "label": "Meet our clinicians",
-            "target": {
-              "internal": {
-                "collection": "pages",
-                "id": "clinicians"
-              }
-            }
-          },
-          "secondaryLink": {
-            "label": "What to expect",
-            "target": {
-              "internal": {
-                "collection": "pages",
-                "id": "what-to-expect"
-              }
-            }
-          },
-          "trustLine": [
-            "Free 15-minute consultation",
-            "Licensed clinicians",
-            "[Insurance accepted]"
-          ],
-          "image": {
-            "assetId": "[asset-id]",
-            "alt": "Sunlit consulting room with a linen armchair and a plant"
-          }
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
         },
-        {
-          "type": "featuredIn",
-          "key": "featured",
-          "label": "Featured in",
-          "appearances": [
-            {
-              "collection": "mediaAppearances",
-              "id": "womlead-self-worth"
-            },
-            {
-              "collection": "mediaAppearances",
-              "id": "female-founders-ep-77"
-            },
-            {
-              "collection": "mediaAppearances",
-              "id": "spotify-self-worth"
-            },
-            {
-              "collection": "mediaAppearances",
-              "id": "apple-self-worth"
-            },
-            {
-              "collection": "mediaAppearances",
-              "id": "youtube-interview"
-            }
-          ],
-          "allLink": {
-            "label": "All podcasts & press",
-            "target": {
-              "internal": {
-                "collection": "pages",
-                "id": "featured-in"
-              }
-            }
-          }
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
         },
-        {
-          "type": "specialtiesGrid",
-          "key": "specialties",
-          "eyebrow": "Specialties",
-          "heading": "What we treat",
-          "specialties": [
+        "target": {
+          "oneOf": [
             {
-              "collection": "specialties",
-              "id": "trauma-ptsd"
-            },
-            {
-              "collection": "specialties",
-              "id": "emdr"
-            },
-            {
-              "collection": "specialties",
-              "id": "anxiety"
-            },
-            {
-              "collection": "specialties",
-              "id": "relationships"
-            },
-            {
-              "collection": "specialties",
-              "id": "grief-loss"
-            },
-            {
-              "collection": "specialties",
-              "id": "life-transitions"
-            }
-          ],
-          "tileLinkLabel": "Learn more"
-        },
-        {
-          "type": "clinicians",
-          "key": "clinicians",
-          "background": "lightCream",
-          "eyebrow": "Our clinicians",
-          "heading": "Choose your clinician, then your time.",
-          "intro": "Every profile lists specialties, fees and open appointments.",
-          "source": {
-            "mode": "auto",
-            "limit": 6
-          },
-          "cardCtaLabel": "View profile & times",
-          "recruitingCard": {
-            "enabled": true,
-            "heading": "Our team is growing.",
-            "body": "We are adding licensed clinicians in [Year]. Their profiles will appear here as they join.",
-            "link": {
-              "label": "Careers",
-              "target": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
                 "internal": {
-                  "collection": "pages",
-                  "id": "careers"
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
                 }
               }
             }
-          }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
         },
-        {
-          "type": "steps",
-          "key": "how-it-works",
-          "eyebrow": "How it works",
-          "heading": "Three steps to begin",
-          "steps": [
-            {
-              "title": "Consultation",
-              "body": "A free 15-minute call to see if we are the right fit."
-            },
-            {
-              "title": "Assessment",
-              "body": "A first session to understand your history and set goals."
-            },
-            {
-              "title": "The work",
-              "body": "Regular sessions, with progress reviewed together."
-            }
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
           ],
-          "moreLink": {
-            "label": "What to expect, in detail",
-            "target": {
-              "internal": {
-                "collection": "pages",
-                "id": "what-to-expect"
-              }
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "titledText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "body"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "hero": {
+        "eyebrow": "Trauma-informed psychotherapy · Long Island, New York",
+        "heading": "A space to heal. The support to grow. The freedom to thrive.",
+        "body": "At [Practice name], we believe exceptional mental health care begins with feeling truly seen, heard, and understood. Through personalized evidence-based psychotherapy, we offer a thoughtful and compassionate approach to healing from trauma, rebuilding a sense of safety, and reclaiming the confidence and freedom to move forward in Long Island and online across New York.",
+        "primaryCta": {
+          "label": "Meet our clinicians",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "clinicians"
             }
           }
         },
-        {
-          "type": "statement",
-          "key": "approach",
-          "background": "darkForest",
-          "eyebrow": "Our approach",
-          "statement": "Good therapy is careful work: a clear assessment, a plan you understand, and a clinician who stays steady with you.",
-          "cta": {
-            "label": "Read our approach",
+        "secondaryLink": {
+          "label": "What to expect",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "what-to-expect"
+            }
+          }
+        },
+        "trustLine": [
+          "Free 15-minute consultation",
+          "Licensed clinicians",
+          "[Insurance accepted]"
+        ],
+        "image": {
+          "assetId": "[asset-id]",
+          "alt": "Sunlit consulting room with a linen armchair and a plant"
+        }
+      },
+      "featuredIn": {
+        "hidden": false,
+        "label": "Featured in",
+        "appearances": [
+          {
+            "collection": "mediaAppearances",
+            "id": "womlead-self-worth"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "female-founders-ep-77"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "youtube-interview"
+          }
+        ],
+        "allLink": {
+          "label": "All podcasts & press",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "featured-in"
+            }
+          }
+        }
+      },
+      "specialties": {
+        "hidden": false,
+        "eyebrow": "Specialties",
+        "heading": "What we treat",
+        "items": [
+          {
+            "collection": "specialties",
+            "id": "trauma-ptsd"
+          },
+          {
+            "collection": "specialties",
+            "id": "emdr"
+          },
+          {
+            "collection": "specialties",
+            "id": "anxiety"
+          },
+          {
+            "collection": "specialties",
+            "id": "relationships"
+          },
+          {
+            "collection": "specialties",
+            "id": "grief-loss"
+          },
+          {
+            "collection": "specialties",
+            "id": "life-transitions"
+          }
+        ],
+        "tileLinkLabel": "Learn more"
+      },
+      "clinicians": {
+        "hidden": false,
+        "eyebrow": "Our clinicians",
+        "heading": "Choose your clinician, then your time.",
+        "intro": "Every profile lists specialties, fees and open appointments.",
+        "mode": "auto",
+        "limit": 6,
+        "cardCtaLabel": "View profile & times",
+        "recruitingCard": {
+          "hidden": false,
+          "heading": "Our team is growing.",
+          "body": "We are adding licensed clinicians in [Year]. Their profiles will appear here as they join.",
+          "link": {
+            "label": "Careers",
             "target": {
               "internal": {
                 "collection": "pages",
-                "id": "our-approach"
+                "id": "careers"
               }
             }
           }
         }
-      ],
+      },
+      "howItWorks": {
+        "hidden": false,
+        "eyebrow": "How it works",
+        "heading": "Three steps to begin",
+        "steps": [
+          {
+            "title": "Consultation",
+            "body": "A free 15-minute call to see if we are the right fit."
+          },
+          {
+            "title": "Assessment",
+            "body": "A first session to understand your history and set goals."
+          },
+          {
+            "title": "The work",
+            "body": "Regular sessions, with progress reviewed together."
+          }
+        ],
+        "moreLink": {
+          "label": "What to expect, in detail",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "what-to-expect"
+            }
+          }
+        }
+      },
+      "approachBand": {
+        "hidden": false,
+        "eyebrow": "Our approach",
+        "statement": "Good therapy is careful work: a clear assessment, a plan you understand, and a clinician who stays steady with you.",
+        "cta": {
+          "label": "Read our approach",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "our-approach"
+            }
+          }
+        }
+      },
       "seo": {
         "title": "Trauma-Informed Psychotherapy · Long Island, NY",
-        "description": "Evidence-based therapy for trauma, anxiety and relationships, in person on Long Island and online across New York. Free 15-minute consultation."
+        "description": "Evidence-based therapy for trauma, anxiety and relationships, in person on Long Island and online across New York. Free 15-minute consultation.",
+        "noindex": false
       }
     }
   ]

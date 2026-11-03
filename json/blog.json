@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Blog",
+  "description": "Content for the blog landing page. Posts come from the Blog Post collection. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "route": "/blog",
+    "template": "BlogIndexPage",
+    "zones": [
+      "hero",
+      "featuredPost",
+      "articleList",
+      "closingCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "hero",
+    "featuredPost",
+    "articleList",
+    "closingCta",
+    "seo"
+  ],
+  "properties": {
+    "hero": {
+      "type": "object",
+      "title": "Hero",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "hero",
+        "order": 1
+      },
+      "required": [
+        "eyebrow",
+        "heading",
+        "intro"
+      ],
+      "properties": {
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Blog"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "The page's only H1."
+        },
+        "intro": {
+          "type": "string",
+          "maxLength": 240,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        }
+      }
+    },
+    "featuredPost": {
+      "type": "object",
+      "title": "Featured post",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "featuredPost",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "mode",
+        "eyebrow",
+        "ctaLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "latest",
+            "manual"
+          ],
+          "default": "latest"
+        },
+        "post": {
+          "$ref": "#/$defs/reference",
+          "description": "Used only when mode is manual."
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "default": "Latest",
+          "description": "The post's topic is added after it automatically."
+        },
+        "ctaLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Read the article"
+        }
+      }
+    },
+    "articleList": {
+      "type": "object",
+      "title": "All articles",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "articleList",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "allTopicsLabel",
+        "topics",
+        "pageSize",
+        "emptyMessage"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "All articles"
+        },
+        "allTopicsLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "default": "All"
+        },
+        "topics": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "description": "Filter buttons, in order. Must match the topic names used on posts."
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 24,
+          "default": 9
+        },
+        "emptyMessage": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "default": "No articles in this topic yet."
+        }
+      }
+    },
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "closingCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "cta"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Meet our clinicians",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "clinicians"
+              }
+            }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "hero": {
+        "eyebrow": "Blog",
+        "heading": "Notes on therapy and healing",
+        "intro": "Short, practical writing from our clinicians. Educational only, and not a substitute for care."
+      },
+      "featuredPost": {
+        "hidden": false,
+        "mode": "latest",
+        "eyebrow": "Latest",
+        "ctaLabel": "Read the article"
+      },
+      "articleList": {
+        "hidden": false,
+        "heading": "All articles",
+        "allTopicsLabel": "All",
+        "topics": [
+          "Trauma",
+          "EMDR",
+          "Relationships",
+          "Grief",
+          "Starting therapy"
+        ],
+        "pageSize": 9,
+        "emptyMessage": "No articles in this topic yet."
+      },
+      "closingCta": {
+        "hidden": false,
+        "heading": "Reading is a start. Talking helps.",
+        "body": "Book a free 15-minute consultation with a clinician.",
+        "cta": {
+          "label": "Meet our clinicians",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "clinicians"
+            }
+          }
+        }
+      },
+      "seo": {
+        "title": "Blog · Notes on Therapy and Healing",
+        "description": "Short, practical articles from our clinicians on trauma, EMDR, relationships, grief and starting therapy.",
+        "noindex": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,613 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Specialty",
+  "description": "One entry per specialty or method (e.g. EMDR). Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "collection",
+    "route": "/specialties/{slug}",
+    "template": "SpecialtyPage",
+    "zones": [
+      "hero",
+      "whoItHelps",
+      "process",
+      "clinicians",
+      "faq",
+      "closingCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "hero",
+    "whoItHelps",
+    "process",
+    "clinicians",
+    "faq",
+    "closingCta",
+    "seo"
+  ],
+  "properties": {
+    "hero": {
+      "type": "object",
+      "title": "Hero",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "hero",
+        "order": 1
+      },
+      "required": [
+        "eyebrow",
+        "heading",
+        "intro",
+        "tileSummary",
+        "ctaLabel",
+        "image"
+      ],
+      "properties": {
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Specialties · How we help"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "The page's only H1."
+        },
+        "intro": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "description": "What it is, in two sentences.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
+        },
+        "evidenceNote": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Optional line on the research behind it."
+        },
+        "tileSummary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 110,
+          "description": "One line used on the Home specialties tile. Not shown on this page."
+        },
+        "ctaLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "See clinicians",
+          "description": "Scrolls to the clinicians zone."
+        },
+        "image": {
+          "$ref": "#/$defs/image",
+          "description": "Landscape photo (5:4)."
+        }
+      }
+    },
+    "whoItHelps": {
+      "type": "object",
+      "title": "Who it helps",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "whoItHelps",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "items"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Who it helps"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        }
+      }
+    },
+    "process": {
+      "type": "object",
+      "title": "Process",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "process",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "steps"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "The process"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/titledText"
+          },
+          "description": "Numbered automatically."
+        }
+      }
+    },
+    "clinicians": {
+      "type": "object",
+      "title": "Clinicians who offer this",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "clinicians",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "mode",
+        "cardCtaLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Clinicians"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "manual"
+          ],
+          "default": "auto",
+          "description": "auto lists every published clinician who has this specialty on their profile."
+        },
+        "clinicians": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "x-ui": {
+            "widget": "referenceList",
+            "collection": "clinicians",
+            "sortable": true
+          },
+          "description": "Used only when mode is manual."
+        },
+        "cardCtaLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "View profile & times",
+          "description": "Card button always opens the clinician's profile."
+        }
+      }
+    },
+    "faq": {
+      "type": "object",
+      "title": "FAQ",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "faq",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "items"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Questions"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/faqItem"
+          }
+        }
+      }
+    },
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "closingCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "cta"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "description": "Must go to the clinicians list or a profile, never straight to booking.",
+          "default": {
+            "label": "Book a Consultation",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "clinicians"
+              }
+            }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "titledText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "body"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        }
+      }
+    },
+    "faqItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "answer"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600,
+          "contentMediaType": "text/markdown",
+          "x-ui": {
+            "widget": "markdown",
+            "toolbar": [
+              "bold",
+              "italic",
+              "link",
+              "bulletList"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "hero": {
+        "eyebrow": "Specialties · How we help",
+        "heading": "EMDR therapy",
+        "intro": "Eye Movement Desensitization and Reprocessing is a structured therapy that helps the brain process distressing memories, so they feel less present and less charged.",
+        "evidenceNote": "Recommended for PTSD by the American Psychological Association and the World Health Organization.",
+        "tileSummary": "A structured, research-backed method for processing distressing memories.",
+        "ctaLabel": "See EMDR clinicians",
+        "image": {
+          "assetId": "[asset-id]",
+          "alt": "Two chairs by a window in soft daylight"
+        }
+      },
+      "whoItHelps": {
+        "hidden": false,
+        "eyebrow": "Who it helps",
+        "heading": "EMDR may help if you live with",
+        "items": [
+          "Memories that intrude or replay",
+          "Panic or startle responses tied to past events",
+          "The effects of an abusive relationship",
+          "Childhood experiences that still shape how you feel",
+          "Grief that feels stuck"
+        ]
+      },
+      "process": {
+        "hidden": false,
+        "eyebrow": "The process",
+        "heading": "What EMDR looks like",
+        "steps": [
+          {
+            "title": "History & planning",
+            "body": "We map what you want to work on, and in what order."
+          },
+          {
+            "title": "Preparation",
+            "body": "You learn grounding skills to use in and between sessions."
+          },
+          {
+            "title": "Processing",
+            "body": "Short sets of eye movements or taps while you hold a memory in mind."
+          },
+          {
+            "title": "Integration",
+            "body": "We check what has shifted and close each session steady."
+          }
+        ]
+      },
+      "clinicians": {
+        "hidden": false,
+        "eyebrow": "Clinicians",
+        "heading": "Clinicians who offer EMDR",
+        "mode": "auto",
+        "cardCtaLabel": "View profile & times"
+      },
+      "faq": {
+        "hidden": false,
+        "eyebrow": "Questions",
+        "heading": "About EMDR",
+        "items": [
+          {
+            "question": "Do I have to describe the memory in detail?",
+            "answer": "No. EMDR does not require you to talk through every detail. You stay in control of what you share."
+          },
+          {
+            "question": "How many sessions will I need?",
+            "answer": "It depends on your history and goals. Your clinician will give you an estimate after the assessment."
+          },
+          {
+            "question": "Can EMDR be done online?",
+            "answer": "Yes. Online EMDR uses on-screen movement or self-tapping and follows the same structure."
+          }
+        ]
+      },
+      "closingCta": {
+        "hidden": false,
+        "heading": "Talk with an EMDR clinician.",
+        "cta": {
+          "label": "Book a Consultation",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "clinicians"
+            }
+          }
+        }
+      },
+      "seo": {
+        "title": "EMDR Therapy · Long Island & Online, NY",
+        "description": "What EMDR is, who it helps and what sessions look like, with the clinicians who offer it. Book a free 15-minute consultation.",
+        "noindex": false
+      }
+    }
+  ]
+}

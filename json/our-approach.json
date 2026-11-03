@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Our Approach",
+  "description": "Content for the Our Approach page. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "route": "/our-approach",
+    "template": "OurApproachPage",
+    "zones": ["hero", "featureImage", "values", "standardOfCare", "founderNote", "closingCta", "meta"]
+  },
+  "required": ["hero", "featureImage", "values", "standardOfCare", "founderNote", "closingCta", "seo"],
+  "properties": {
+    "hero": {
+      "type": "object",
+      "title": "Hero",
+      "additionalProperties": false,
+      "x-cms": { "zone": "hero", "order": 1 },
+      "required": ["eyebrow", "heading", "intro"],
+      "properties": {
+        "eyebrow": { "type": "string", "maxLength": 40, "default": "Our Mission", "description": "Small caps line above the heading." },
+        "heading": { "type": "string", "minLength": 1, "maxLength": 80, "default": "Our approach", "description": "The page's only H1." },
+        "intro": { "type": "string", "maxLength": 280, "description": "One or two sentences stating the mission.", "x-ui": { "widget": "textarea", "rows": 3 } }
+      }
+    },
+
+    "featureImage": {
+      "type": "object",
+      "title": "Feature image",
+      "additionalProperties": false,
+      "x-cms": { "zone": "featureImage", "order": 1 },
+      "required": ["hidden", "image"],
+      "properties": {
+        "hidden": { "type": "boolean", "default": false },
+        "image": { "$ref": "#/$defs/image", "description": "Wide photo (21:9). Calm interior, natural light, no posed smiles." }
+      }
+    },
+
+    "values": {
+      "type": "object",
+      "title": "Values",
+      "additionalProperties": false,
+      "x-cms": { "zone": "values", "order": 1 },
+      "required": ["hidden", "eyebrow", "heading", "items"],
+      "properties": {
+        "hidden": { "type": "boolean", "default": false },
+        "eyebrow": { "type": "string", "maxLength": 40, "default": "Values" },
+        "heading": { "type": "string", "minLength": 1, "maxLength": 80, "default": "What guides our work" },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "description": "Shown in a grid. Four reads best on desktop.",
+          "items": { "$ref": "#/$defs/titledText" }
+        }
+      }
+    },
+
+    "standardOfCare": {
+      "type": "object",
+      "title": "Standard of care",
+      "additionalProperties": false,
+      "x-cms": { "zone": "standardOfCare", "order": 1 },
+      "required": ["hidden", "eyebrow", "heading", "items"],
+      "properties": {
+        "hidden": { "type": "boolean", "default": false },
+        "eyebrow": { "type": "string", "maxLength": 40, "default": "Standard of care" },
+        "heading": { "type": "string", "minLength": 1, "maxLength": 80, "default": "What every client can count on" },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "description": "Each item renders as a bold lead-in followed by one sentence.",
+          "items": { "$ref": "#/$defs/titledText" }
+        }
+      }
+    },
+
+    "founderNote": {
+      "type": "object",
+      "title": "Founder note",
+      "additionalProperties": false,
+      "x-cms": { "zone": "founderNote", "order": 1 },
+      "required": ["hidden", "eyebrow", "portrait", "quote", "founder", "authorName", "authorRole", "profileLink"],
+      "properties": {
+        "hidden": { "type": "boolean", "default": false },
+        "eyebrow": { "type": "string", "maxLength": 40, "default": "A note from our founder" },
+        "portrait": { "$ref": "#/$defs/image", "description": "Portrait (4:5)." },
+        "quote": { "type": "string", "minLength": 1, "maxLength": 300, "description": "Short note in the founder's voice. Quotation marks are added by the template.", "x-ui": { "widget": "textarea", "rows": 4 } },
+        "founder": { "$ref": "#/$defs/reference", "description": "The founder's clinician entry." },
+        "authorName": { "type": "string", "maxLength": 60, "description": "Name with credentials, as shown under the quote." },
+        "authorRole": { "type": "string", "maxLength": 40, "default": "Founder" },
+        "profileLink": { "$ref": "#/$defs/link", "description": "Should point to the founder's clinician profile." }
+      }
+    },
+
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": { "zone": "closingCta", "order": 1 },
+      "required": ["hidden", "heading", "cta"],
+      "properties": {
+        "hidden": { "type": "boolean", "default": false },
+        "heading": { "type": "string", "minLength": 1, "maxLength": 80, "default": "Ready to talk with a clinician?" },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "description": "Must point to a clinician profile or the clinicians list. Booking only starts on a profile.",
+          "default": { "label": "Book a Consultation", "target": { "internal": { "collection": "pages", "id": "clinicians" } } }
+        }
+      }
+    },
+
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": { "zone": "meta", "order": 1 },
+      "required": ["title", "description", "noindex"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 160 },
+        "ogImage": { "$ref": "#/$defs/image" },
+        "noindex": { "type": "boolean", "default": false }
+      }
+    }
+  },
+
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["collection", "id"],
+      "properties": {
+        "collection": { "type": "string", "enum": ["pages", "clinicians", "specialties", "mediaAppearances", "blogPosts"] },
+        "id": { "type": "string" }
+      }
+    },
+
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "target"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["internal"],
+              "properties": {
+                "internal": { "$ref": "#/$defs/reference" },
+                "anchor": { "type": "string" }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["url"],
+              "properties": {
+                "url": { "type": "string", "format": "uri" }
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetId", "alt"],
+      "x-ui": { "widget": "image" },
+      "properties": {
+        "assetId": { "type": "string" },
+        "alt": { "type": "string", "minLength": 5, "maxLength": 160, "description": "Required for WCAG." },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+
+    "titledText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "body"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 160, "x-ui": { "widget": "textarea", "rows": 2 } }
+      }
+    }
+  },
+
+  "examples": [
+    {
+      "hero": {
+        "eyebrow": "Our Mission",
+        "heading": "Our approach",
+        "intro": "We provide careful, evidence-based behavioral health care, so more people can live without being governed by what happened to them."
+      },
+      "featureImage": {
+        "hidden": false,
+        "image": { "assetId": "[asset-id]", "alt": "Quiet waiting room in morning light, with wood and linen furnishings" }
+      },
+      "values": {
+        "hidden": false,
+        "eyebrow": "Values",
+        "heading": "What guides our work",
+        "items": [
+          { "title": "Evidence first", "body": "We use methods with research behind them, and we explain why." },
+          { "title": "Dignity", "body": "You are treated as the expert on your own life." },
+          { "title": "Steadiness", "body": "A consistent clinician, a consistent time, and a clear plan." },
+          { "title": "Access", "body": "In person or online, with transparent fees." }
+        ]
+      },
+      "standardOfCare": {
+        "hidden": false,
+        "eyebrow": "Standard of care",
+        "heading": "What every client can count on",
+        "items": [
+          { "title": "Licensed clinicians only.", "body": "Every therapist holds an active state license." },
+          { "title": "Trauma-informed care.", "body": "We move at a pace you can manage." },
+          { "title": "A written treatment plan.", "body": "Built with you and reviewed every [8] sessions." },
+          { "title": "Clinical consultation.", "body": "Clinicians review cases together, with your privacy protected." },
+          { "title": "Private by default.", "body": "HIPAA-compliant records and video." }
+        ]
+      },
+      "founderNote": {
+        "hidden": false,
+        "eyebrow": "A note from our founder",
+        "portrait": { "assetId": "[asset-id]", "alt": "Jess Rebelo seated by a window in natural light" },
+        "quote": "I founded Up Therapy Group so people could find specialized trauma care without having to search for it. The practice will grow beyond me; the standard will not change.",
+        "founder": { "collection": "clinicians", "id": "jess-rebelo" },
+        "authorName": "Jess Rebelo, LCSW",
+        "authorRole": "Founder",
+        "profileLink": { "label": "Read Jess’s profile", "target": { "internal": { "collection": "clinicians", "id": "jess-rebelo" } } }
+      },
+      "closingCta": {
+        "hidden": false,
+        "heading": "Ready to talk with a clinician?",
+        "cta": { "label": "Book a Consultation", "target": { "internal": { "collection": "clinicians", "id": "jess-rebelo" } } }
+      },
+      "seo": {
+        "title": "Our Approach · [Practice name]",
+        "description": "Evidence-based, trauma-informed behavioral health care. Our values, our standard of care and a note from our founder, Jess Rebelo, LCSW.",
+        "noindex": false
+      }
+    }
+  ]
+}

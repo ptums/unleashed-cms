@@ -1,0 +1,494 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "What to Expect",
+  "description": "Content for the What to Expect page. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "route": "/what-to-expect",
+    "template": "WhatToExpectPage",
+    "zones": [
+      "hero",
+      "steps",
+      "formats",
+      "closingCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "hero",
+    "steps",
+    "formats",
+    "closingCta",
+    "seo"
+  ],
+  "properties": {
+    "hero": {
+      "type": "object",
+      "title": "Hero",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "hero",
+        "order": 1
+      },
+      "required": [
+        "eyebrow",
+        "heading",
+        "intro"
+      ],
+      "properties": {
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Experience"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "What to expect",
+          "description": "The page's only H1."
+        },
+        "intro": {
+          "type": "string",
+          "maxLength": 240,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "object",
+      "title": "Steps",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "steps",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "items"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/step"
+          },
+          "description": "Numbered automatically, with a Step n of N label."
+        }
+      }
+    },
+    "formats": {
+      "type": "object",
+      "title": "In person & online",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "formats",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "body",
+        "image"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "In person & online"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
+        },
+        "image": {
+          "$ref": "#/$defs/image",
+          "description": "Landscape photo (4:3)."
+        },
+        "link": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Fees & insurance",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "fees-insurance"
+              }
+            }
+          }
+        }
+      }
+    },
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "closingCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "cta"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Meet our clinicians",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "clinicians"
+              }
+            }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "body",
+        "facts"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
+        },
+        "facts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "value"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              }
+            }
+          },
+          "description": "Short label and value pairs, e.g. Length · 15 minutes."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "hero": {
+        "eyebrow": "Experience",
+        "heading": "What to expect",
+        "intro": "Starting therapy takes three steps. You will know what each one involves before it begins."
+      },
+      "steps": {
+        "hidden": false,
+        "items": [
+          {
+            "title": "Consultation",
+            "body": "A short call with the clinician you chose. You share what brings you in; they explain how they work. If it is not the right fit, they will help you find someone who is.",
+            "facts": [
+              {
+                "label": "Length",
+                "value": "15 minutes"
+              },
+              {
+                "label": "Format",
+                "value": "Phone or video"
+              },
+              {
+                "label": "Cost",
+                "value": "Free"
+              }
+            ]
+          },
+          {
+            "title": "Assessment",
+            "body": "Your first full session. We review your history, what has helped and what has not, and agree on clear goals. You leave with a written plan.",
+            "facts": [
+              {
+                "label": "Length",
+                "value": "60–75 minutes"
+              },
+              {
+                "label": "Format",
+                "value": "In person or online"
+              },
+              {
+                "label": "Before",
+                "value": "Intake forms, sent by email"
+              }
+            ]
+          },
+          {
+            "title": "The work",
+            "body": "Regular sessions at a consistent time. Early on, weekly is best. We review progress together and adjust the plan as you change.",
+            "facts": [
+              {
+                "label": "Length",
+                "value": "45–60 minutes"
+              },
+              {
+                "label": "Frequency",
+                "value": "Weekly or every other week"
+              },
+              {
+                "label": "Reviews",
+                "value": "Every [8] sessions"
+              }
+            ]
+          }
+        ]
+      },
+      "formats": {
+        "hidden": false,
+        "eyebrow": "In person & online",
+        "heading": "Same care, in the room or on screen.",
+        "body": "Meet in our [City] office, or by secure video from anywhere in [State]. You can switch between them.",
+        "image": {
+          "assetId": "[asset-id]",
+          "alt": "Laptop on a quiet desk in morning light"
+        },
+        "link": {
+          "label": "Fees & insurance",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "fees-insurance"
+            }
+          }
+        }
+      },
+      "closingCta": {
+        "hidden": false,
+        "heading": "Begin with a consultation.",
+        "body": "Choose a clinician, then a time.",
+        "cta": {
+          "label": "Meet our clinicians",
+          "target": {
+            "internal": {
+              "collection": "pages",
+              "id": "clinicians"
+            }
+          }
+        }
+      },
+      "seo": {
+        "title": "What to Expect · Starting Therapy",
+        "description": "Starting therapy takes three steps: a free consultation, an assessment, then regular sessions in person or online.",
+        "noindex": false
+      }
+    }
+  ]
+}

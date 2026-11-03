@@ -13,3 +13,5 @@ cdk.out
 
 # cmd list
 cmds.txt
+# macOS
+.DS_Store

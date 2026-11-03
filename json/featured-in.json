@@ -1,0 +1,423 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Featured In",
+  "description": "Content for the Featured In (podcasts & press) page. Episode titles, outlets and platform links come from Media Appearance entries. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "route": "/featured-in",
+    "template": "FeaturedInPage",
+    "zones": [
+      "hero",
+      "featuredEpisode",
+      "appearances",
+      "pressCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "hero",
+    "featuredEpisode",
+    "appearances",
+    "pressCta",
+    "seo"
+  ],
+  "properties": {
+    "hero": {
+      "type": "object",
+      "title": "Hero",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "hero",
+        "order": 1
+      },
+      "required": [
+        "eyebrow",
+        "heading",
+        "intro"
+      ],
+      "properties": {
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Our Mission · Featured In"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "Podcasts & press",
+          "description": "The page's only H1."
+        },
+        "intro": {
+          "type": "string",
+          "maxLength": 240,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          }
+        }
+      },
+      "description": "The outlet names under the intro are taken from the appearances zone."
+    },
+    "featuredEpisode": {
+      "type": "object",
+      "title": "Featured episode",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "featuredEpisode",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "appearance",
+        "eyebrow",
+        "image",
+        "listenLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "appearance": {
+          "$ref": "#/$defs/reference",
+          "description": "A Media Appearance entry. Its title, outlet and platform links are shown here."
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Featured episode",
+          "description": "The outlet name is added after it automatically."
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Overrides the appearance's own summary when filled.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 3
+          }
+        },
+        "image": {
+          "$ref": "#/$defs/image",
+          "description": "Video still or episode art (16:9). Links to the video; never autoplays."
+        },
+        "listenLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Listen or watch"
+        }
+      }
+    },
+    "appearances": {
+      "type": "object",
+      "title": "All appearances",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "appearances",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "items"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "All appearances"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "Episodes & interviews"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 40,
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "x-ui": {
+            "widget": "referenceList",
+            "collection": "mediaAppearances",
+            "sortable": true
+          },
+          "description": "Listed in this order. Each shows type, outlet, title, summary and its platform links."
+        }
+      }
+    },
+    "pressCta": {
+      "type": "object",
+      "title": "Press & speaking",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "pressCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "email"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "Press & speaking"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 200,
+          "default": "For interviews, panels and podcasts, email"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Meet our founder",
+            "target": {
+              "internal": {
+                "collection": "clinicians",
+                "id": "jess-rebelo"
+              }
+            }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "hero": {
+        "eyebrow": "Our Mission · Featured In",
+        "heading": "Podcasts & press",
+        "intro": "Conversations with our founder, Jess Rebelo, LCSW, on trauma, self-worth and building a practice."
+      },
+      "featuredEpisode": {
+        "hidden": false,
+        "appearance": {
+          "collection": "mediaAppearances",
+          "id": "womlead-self-worth"
+        },
+        "eyebrow": "Featured episode",
+        "summary": "Jess talks with WomLEAD about why self-worth shapes the relationships we stay in, and how therapy helps people see their patterns clearly.",
+        "image": {
+          "assetId": "[asset-id]",
+          "alt": "Jess Rebelo in conversation during a video interview"
+        },
+        "listenLabel": "Listen or watch"
+      },
+      "appearances": {
+        "hidden": false,
+        "eyebrow": "All appearances",
+        "heading": "Episodes & interviews",
+        "items": [
+          {
+            "collection": "mediaAppearances",
+            "id": "female-founders-ep-77"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "womlead-self-worth"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "youtube-interview"
+          },
+          {
+            "collection": "mediaAppearances",
+            "id": "pbn-steve-harper-series"
+          }
+        ]
+      },
+      "pressCta": {
+        "hidden": false,
+        "heading": "Press & speaking",
+        "body": "For interviews, panels and podcasts, email",
+        "email": "press@example.com",
+        "cta": {
+          "label": "Meet our founder",
+          "target": {
+            "internal": {
+              "collection": "clinicians",
+              "id": "jess-rebelo"
+            }
+          }
+        }
+      },
+      "seo": {
+        "title": "Podcasts & Press · Jess Rebelo, LCSW",
+        "description": "Podcast episodes, interviews and features with Jess Rebelo, LCSW, on trauma, self-worth and building a therapy practice.",
+        "noindex": false
+      }
+    }
+  ]
+}
