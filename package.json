@@ -5,7 +5,9 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "dev": "tsx scripts/dev-server.ts",
+    "sync": "tsx scripts/sync-schemas.ts"
   },
   "devDependencies": {
     "@swc/core": "^1.15.0",

@@ -14,6 +14,21 @@ const baseClient = new DynamoDBClient({});
 // 2. Wrap it with the Document Client (automatically handles marshalling/unmarshalling)
 const client = DynamoDBDocumentClient.from(baseClient);
 
+// DynamoDB does not keep the key order of a map, so the same schema can come back
+// with its keys in a different order. Sort the keys at every level before comparing.
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  if (value !== null && typeof value === "object") {
+    const entries = Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`);
+    return `{${entries.join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
 async function main() {
   const contentTableName = process.env.CONTENT_TABLE_NAME;
   if (!contentTableName) {
@@ -74,7 +89,7 @@ async function main() {
       }),
     );
 
-    if (JSON.stringify(Item?.schema) === JSON.stringify(json)) {
+    if (stableStringify(Item?.schema) === stableStringify(json)) {
       console.log(`id: ${id} unchanged`);
       continue;
     }

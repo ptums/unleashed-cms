@@ -143,10 +143,24 @@ Notes:
 
    Verified on the real schema table: the first run wrote version 1, and the second said `unchanged`. The draft-page part was verified with a stubbed client (created, then exists).
 
+5. **Key-order fix:** DynamoDB does not keep the key order of a map, so `JSON.stringify` saw a changed schema on every run and wrote a new version each time (Home reached version 4). The script now compares with `stableStringify`, which sorts keys at every level. Verified: 2 runs on the real tables both print `unchanged`.
+
+## Step 8: local dev server (2026-11-02)
+
+`scripts/dev-server.ts` (`npm run dev`) sends the 7 routes to their Lambda handlers on `127.0.0.1:3001`, against the real tables. It has no login, so it is local only. `npm run sync` runs the schema sync.
+
+End-to-end test with a new schema, `schema/about.ts` (a `singleton` with zones `hero`, `body` and `aside`):
+
+1. `npm run sync`: `about: draft page created`, `about: version 1 written`.
+2. `GET /admin/pages` lists `about`. `GET /admin/schemas/about` returns its schema. `GET /pages/about` is 404 (not published yet).
+3. `PUT /admin/pages/about` with `heroTitle` and `intro`: 200, and the draft shows both.
+4. `POST /admin/pages/about/publish`: 200. `GET /pages/about` now returns the content.
+
+This also verified `publish-page` and the sync's draft-page part on the real tables. Test data left in the tables: the `about` page (draft and published, test text) and the `zz-test` draft.
+
 Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --force` downgrade) and caused all the critical and high audit issues. Back on Jest 30, there are 0 critical and 0 high. Do not run `npm audit fix --force` here.
 
 ## Next
 
-* Run `publish-page` against the real table on a throwaway draft.
-* Run the sync script with `CONTENT_TABLE_NAME` against the real tables.
+* The admin UI (option 2): Vite + React app with the page list and a react-jsonschema-form edit form, against the dev server.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes.
