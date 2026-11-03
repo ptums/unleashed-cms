@@ -130,8 +130,23 @@ Notes:
 * Publish parts that need schemas come later: strict validation (R11), removing hidden fields (R13), the AI SEO step (R12) and the revalidate webhook (R14).
 * Page creation is not a route: a schema deploy creates its page (R4). The page Lambdas are complete for now.
 
+## Step 7: schemas (started 2026-11-02)
+
+1. **Library:** Zod 4 (Peter's pick over TypeBox). `z.toJSONSchema()` gives JSON Schema 2020-12, and `.meta()` passes `x-cms` and `x-ui` through as they are. A second `.meta()` replaces the first, so each field gets 1 `.meta()`, and the page meta goes on the object.
+2. **Schema files** live in `schema/` (R1 says `schemas/`; to be made the same). The file name is the page id, and the schema is the default export. First file: `schema/home.ts`, a `singleton` with zones `hero` and `body`. `order` counts inside each zone.
+3. **`SchemaTable`** (N10): `pk = SCHEMA#<id>`, `sk = VERSION#<n>` or `LATEST`, no index, `RETAIN`. Deployed.
+4. **`scripts/sync-schemas.ts`** runs after `cdk deploy`, with `SCHEMA_TABLE_NAME` and `CONTENT_TABLE_NAME` set. For each schema file, it:
+   * creates the DRAFT page for a `singleton` with `attribute_not_exists(pk)`, so it never replaces a draft (R4);
+   * reads `LATEST`, and skips the schema when the JSON is the same;
+   * otherwise writes `VERSION#<n+1>` and `LATEST` in 1 transaction.
+
+   Verified on the real schema table: the first run wrote version 1, and the second said `unchanged`. The draft-page part was verified with a stubbed client (created, then exists).
+
+Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --force` downgrade) and caused all the critical and high audit issues. Back on Jest 30, there are 0 critical and 0 high. Do not run `npm audit fix --force` here.
+
 ## Next
 
 * Run `publish-page` against the real table on a throwaway draft.
-* Start the schema work: `SchemaTable`, the schema files and the deploy step (Peter writes the new patterns).
+* Run the sync script with `CONTENT_TABLE_NAME` against the real tables.
+* The admin Lambda that reads a schema (`GET /admin/schemas/{id}`), for the edit form.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes.

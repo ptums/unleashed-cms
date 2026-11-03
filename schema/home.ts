@@ -22,3 +22,5 @@ export const homePageSchema = z
   .meta({ title: "Home", "x-cms": { kind: "singleton" } });
 // Extract the TypeScript type from the Zod schema
 export type HomePageData = z.infer<typeof homePageSchema>;
+
+export default homePageSchema;

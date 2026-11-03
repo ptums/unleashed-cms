@@ -25,6 +25,14 @@ export class UnleashedCmsStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    // SCHEMAS: pk = SCHEMA#<id>, sk = VERSION#<n> or LATEST.
+    // No index: the page list comes from gsi1 on ContentTable.
+    const schemaTable = new dynamodb.TableV2(this, "SchemaTable", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
     const getPageFn = new NodejsFunction(this, "GetPageFn", {
       entry: "lambda/get-pages.ts",
       runtime: lambda.Runtime.NODEJS_22_X,
