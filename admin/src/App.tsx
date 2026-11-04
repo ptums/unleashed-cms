@@ -23,11 +23,14 @@ import {
   type Target,
 } from "./api";
 import { buildUiSchema, pickSchemaFields } from "./uiSchema";
+import { ImageField } from "./ImageField";
 import { fillReferenceCollections, publishSchema, zoneSchema, zonesOf } from "./editorSchema";
 
 // The schemas are JSON Schema 2020-12 (prefixItems, unevaluatedProperties), so use Ajv2020.
 // strict: false lets Ajv ignore the x-cms and x-ui hint keywords.
 const validator = customizeValidator({ AjvClass: Ajv2020, ajvOptionsOverrides: { strict: false } });
+// Custom fields, by the ui:field name that uiSchema.ts sets.
+const FIELDS = { image: ImageField };
 
 type Notice = { kind: "ok" | "error" | "info"; text: string };
 
@@ -540,6 +543,7 @@ function PageEditor({ target, onDeleted }: { target: Target; onDeleted: () => vo
             ref={formRef}
             schema={formSchema as RJSFSchema}
             uiSchema={uiSchema}
+            fields={FIELDS}
             formData={{ [zone]: formData[zone] }}
             validator={validator}
             transformErrors={transformErrors}

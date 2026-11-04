@@ -17,6 +17,7 @@ import { handler as listCollections } from "../lambda/list-collections";
 import { handler as listEntries } from "../lambda/list-entries";
 import { handler as createEntry } from "../lambda/create-entry";
 import { handler as createUpload } from "../lambda/create-upload";
+import { handler as viewUpload } from "../lambda/view-upload";
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -43,6 +44,7 @@ const routes: Route[] = [
   { method: "POST", path: "/admin/collections/{type}/entries/{slug}/publish", handler: publishPage },
   { method: "DELETE", path: "/admin/collections/{type}/entries/{slug}", handler: deletePage },
   { method: "POST", path: "/admin/uploads", handler: createUpload },
+  { method: "GET", path: "/admin/uploads/{file}", handler: viewUpload },
 ];
 
 // "/admin/pages/{id}" -> a regex with 1 capture group per {name}, plus the names.

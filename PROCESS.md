@@ -171,7 +171,7 @@ Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --
 * **Publish (R11):** strict validation runs first with Ajv 2020. If it fails, the fields are marked and nothing is saved or published. If it passes, the draft is saved, then published.
 * **Sync fix:** `z.toJSONSchema` now runs in `io: "input"` mode. The default mode marked every field with a default as required, so Ajv rejected valid data (the clinician profile example failed on `year`). All 9 schemas were re-synced (Home is version 7), and all 9 JSON examples now pass the UI's validator.
 * Checked in a browser by Peter: the page list, the Home form and Save draft work.
-* Limits: clearing a top-level field does not remove it (`put-pages` only sets fields), and there is no image upload yet.
+* Limits: clearing a top-level field does not remove it (`put-pages` only sets fields), and image upload came in Step 12.
 
 ## Step 10: a simpler editor for a non-technical user (2026-11-02, built by Claude)
 
@@ -199,9 +199,19 @@ Clinicians, blog posts and specialties have many entries each, so they are colle
 * **Admin UI (Claude):** the side bar has a group per collection with "+ Add new". The editor types only a name. An entry has a Delete button that asks first. Hash routes: `#/pages/<id>` and `#/c/<type>/<slug>`.
 * Verified on the real tables with a test entry: create 201, same name 409, list, get, save, publish, save to an unknown entry 404, delete 204 (0 items left), and pages still work. Peter checked it in a browser.
 
+## Step 12: image upload (2026-11-03, bucket and upload route by Peter, the rest by Claude)
+
+The editor picks a file. There is no link to paste.
+
+* **Bucket (Peter):** `MediaBucket` in the stack. All public access is blocked, it allows only HTTPS, and CORS allows PUT and GET from `localhost:5173`. Keys are `uploads/<uuid>.<jpg|png|webp>`.
+* **Upload route (Peter, fix pass by Claude):** `POST /admin/uploads` with `{ contentType }` returns `{ uploadUrl, key }`, a signed PUT link that works for 5 minutes. Only JPEG, PNG and WebP are allowed (exact lookup). `signableHeaders` adds `content-type` to the signature: by default the SDK signs only `host`, so a JPEG could go to a PNG key. Now S3 refuses a different type with 403.
+* **View route (Claude):** `GET /admin/uploads/{file}` returns a signed GET link for the preview, because the bucket is private. It accepts only names the upload route makes.
+* **Picker (Claude):** `admin/src/ImageField.tsx` replaces the object form of every field with `x-ui.widget: "image"`. It shows a preview, "Choose image" or "Replace image", and a progress bar. It checks the type and a 10 MB limit, and saves the key in `assetId`. A new image drops `alt` and `focalPoint`, so the AI service writes a new description on publish.
+* Verified: a wrong type gets 403, an upload and view work through the dev proxy, and every non-SEO image in all 10 schemas gets the picker. Peter uploaded a portrait in a browser, and the preview stayed after a reload.
+* Later, with the deploy: the CDK routes and S3 grants for the 2 Lambdas, `cms.uptherapygroup.com` in the CORS origins, and CloudFront so the website can show the images.
+
 ## Next
 
-* **Image upload (next, before Bedrock).** The editor picks a file, not a link. Plan: an S3 bucket in the stack and a presigned upload route (Peter writes them, new patterns), then an image widget with a preview (Claude). Alt text stays with the AI service.
 * The Bedrock AI service (R12), built by Peter. It runs on publish and writes the SEO data and the image descriptions (`alt`) for the page. Rule from Peter: on the first publish it always writes them. On a later publish the page already has them, so the service first decides if the changes are big enough to write new ones. The editor never sees these fields. Until the service exists, published pages have no SEO data or image descriptions.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
 * Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.

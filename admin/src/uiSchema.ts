@@ -26,8 +26,10 @@ function widgetFor(xui: Hints | undefined): UiSchema {
       };
     case "referenceList":
       return { "ui:options": { orderable: xui.sortable !== false } };
+    case "image":
+      // The whole image object becomes 1 picker (ImageField), not a form per key.
+      return { "ui:field": "image" };
     default:
-      // image and other hints use the default object form until custom widgets exist.
       return {};
   }
 }

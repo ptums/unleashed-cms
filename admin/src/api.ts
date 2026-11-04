@@ -90,3 +90,43 @@ export function listEntries(type: string): Promise<EntrySummary[]> {
 export function createEntry(type: string, name: string): Promise<{ type: string; slug: string; title: string }> {
   return request("POST", `/admin/collections/${encodeURIComponent(type)}/entries`, { name });
 }
+
+// Images. The bucket is private: upload with a signed PUT link, view with a signed GET link.
+export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export function requestUpload(contentType: string): Promise<{ uploadUrl: string; key: string }> {
+  return request("POST", "/admin/uploads", { contentType });
+}
+
+// XMLHttpRequest, because fetch cannot report upload progress.
+export function uploadFile(uploadUrl: string, file: File, onProgress: (percent: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    // Must match the type the link was signed for, or S3 refuses it (403).
+    xhr.setRequestHeader("content-type", file.type);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`Upload failed (${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => {
+      reject(new Error("Upload failed. Check your connection."));
+    };
+    xhr.send(file);
+  });
+}
+
+// "uploads/<uuid>.png" -> a signed link that works for 5 minutes.
+export async function viewUrl(key: string): Promise<string> {
+  const file = key.replace(/^uploads\//, "");
+  const { url } = await request<{ url: string }>("GET", `/admin/uploads/${encodeURIComponent(file)}`);
+  return url;
+}
