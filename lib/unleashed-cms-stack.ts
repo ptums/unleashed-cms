@@ -5,11 +5,27 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { appendFile } from "fs";
+import * as s3 from "aws-cdk-lib/aws-s3";
 
 export class UnleashedCmsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // MEDIA: images the editor uploads. Key: uploads/<uuid>.<ext>
+    const mediaBucket = new s3.Bucket(this, "MediaBucket", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
+          allowedOrigins: ["http://localhost:5173"],
+          allowedHeaders: ["*"],
+          maxAge: 3000,
+        },
+      ],
+    });
 
     // GET A PAGE
     const table = new dynamodb.TableV2(this, "ContentTable", {
@@ -60,5 +76,8 @@ export class UnleashedCmsStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
+    new cdk.CfnOutput(this, "MediaBucketName", {
+      value: mediaBucket.bucketName,
+    });
   }
 }
