@@ -47,14 +47,46 @@ export function getSchema(id: string): Promise<SchemaRecord> {
   return request("GET", `/admin/schemas/${encodeURIComponent(id)}`);
 }
 
-export function getDraft(id: string): Promise<PageData> {
-  return request("GET", `/admin/pages/${encodeURIComponent(id)}`);
+// What the editor is working on: a page, or 1 entry of a collection.
+export type Target = { kind: "page"; id: string } | { kind: "entry"; type: string; slug: string };
+export type CollectionSummary = { type: string; title: string };
+export type EntrySummary = { slug: string; title: string };
+
+function contentPath(target: Target): string {
+  return target.kind === "page"
+    ? `/admin/pages/${encodeURIComponent(target.id)}`
+    : `/admin/collections/${encodeURIComponent(target.type)}/entries/${encodeURIComponent(target.slug)}`;
 }
 
-export function saveDraft(id: string, fields: PageData): Promise<unknown> {
-  return request("PUT", `/admin/pages/${encodeURIComponent(id)}`, fields);
+// A page's schema has the page id. An entry uses its collection's schema.
+export function schemaIdOf(target: Target): string {
+  return target.kind === "page" ? target.id : target.type;
 }
 
-export function publishPage(id: string): Promise<PageData> {
-  return request("POST", `/admin/pages/${encodeURIComponent(id)}/publish`);
+export function getDraft(target: Target): Promise<PageData> {
+  return request("GET", contentPath(target));
+}
+
+export function saveDraft(target: Target, fields: PageData): Promise<unknown> {
+  return request("PUT", contentPath(target), fields);
+}
+
+export function publishContent(target: Target): Promise<PageData> {
+  return request("POST", `${contentPath(target)}/publish`);
+}
+
+export function deleteContent(target: Target): Promise<unknown> {
+  return request("DELETE", contentPath(target));
+}
+
+export function listCollections(): Promise<CollectionSummary[]> {
+  return request("GET", "/admin/collections");
+}
+
+export function listEntries(type: string): Promise<EntrySummary[]> {
+  return request("GET", `/admin/collections/${encodeURIComponent(type)}/entries`);
+}
+
+export function createEntry(type: string, name: string): Promise<{ type: string; slug: string; title: string }> {
+  return request("POST", `/admin/collections/${encodeURIComponent(type)}/entries`, { name });
 }

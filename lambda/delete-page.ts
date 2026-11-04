@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { contentKey } from "./content-key";
 
 // 1. Initialize the base client
 const baseClient = new DynamoDBClient({});
@@ -9,9 +10,11 @@ const baseClient = new DynamoDBClient({});
 const client = DynamoDBDocumentClient.from(baseClient);
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
-  const pathId = event.pathParameters?.id;
+  // A page (/admin/pages/{id}) or a collection entry (/admin/collections/{type}/entries/{slug}).
+  const key = contentKey(event);
+  const pathId = key?.id;
 
-  if (!pathId) {
+  if (!key) {
     return {
       statusCode: 400,
       headers: { "content-type": "application/json" },
@@ -28,14 +31,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
           {
             Delete: {
               TableName: process.env.TABLE_NAME,
-              Key: { pk: `PAGE#${pathId}`, sk: "DRAFT" },
+              Key: { pk: key.pk, sk: "DRAFT" },
               ConditionExpression: "attribute_exists(pk)",
             },
           },
           {
             Delete: {
               TableName: process.env.TABLE_NAME,
-              Key: { pk: `PAGE#${pathId}`, sk: "PUBLISHED" },
+              Key: { pk: key.pk, sk: "PUBLISHED" },
             },
           },
         ],

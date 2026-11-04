@@ -171,7 +171,7 @@ Also done 2026-11-02: npm packages updated. Jest was at 25 (an `npm audit fix --
 * **Publish (R11):** strict validation runs first with Ajv 2020. If it fails, the fields are marked and nothing is saved or published. If it passes, the draft is saved, then published.
 * **Sync fix:** `z.toJSONSchema` now runs in `io: "input"` mode. The default mode marked every field with a default as required, so Ajv rejected valid data (the clinician profile example failed on `year`). All 9 schemas were re-synced (Home is version 7), and all 9 JSON examples now pass the UI's validator.
 * Checked in a browser by Peter: the page list, the Home form and Save draft work.
-* Limits: clearing a top-level field does not remove it (`put-pages` only sets fields), collections have no entry list yet, and there is no image upload.
+* Limits: clearing a top-level field does not remove it (`put-pages` only sets fields), and there is no image upload yet.
 
 ## Step 10: a simpler editor for a non-technical user (2026-11-02, built by Claude)
 
@@ -188,9 +188,20 @@ Peter's ask: the editor is a business person with little technical knowledge, so
 * **Name:** "Up Therapy Group" is the internal name only. Everything the editor sees says "Unleashed Potential Therapy Group".
 * Verified with all 9 schemas: no form shows SEO or `alt`, each section form accepts its part of the example content, and data the editor can produce passes the publish check. Peter checked the section view in a browser before the SEO change.
 
+## Step 11: collections (2026-11-03, create route by Peter, the rest by Claude)
+
+Clinicians, blog posts and specialties have many entries each, so they are collections, not pages.
+
+* **Keys:** an entry is `pk = ENTRY#<type>#<slug>` with a DRAFT and a PUBLISHED item, like a page. The draft has `gsi1pk = ENTRIES#<type>` and `gsi1sk = <slug>`, so 1 query lists 1 collection.
+* **Create (Peter):** `POST /admin/collections/{type}/entries` with `{ name }`. It checks that the schema is a collection, makes the slug (accents removed, lower case, dashes), and refuses a taken slug with 409 (`attribute_not_exists`).
+* **Shared key helper (Claude):** `lambda/content-key.ts` turns the path into the item key, for a page (`{id}`) or an entry (`{type}/{slug}`). get-draft, put-pages, publish-page and delete-page use it, so the same 4 handlers serve both.
+* **List routes (Claude):** `GET /admin/collections` (a small Scan of the LATEST schemas, kept when kind is "collection") and `GET /admin/collections/{type}/entries` (an empty list is a 200, not a 404).
+* **Admin UI (Claude):** the side bar has a group per collection with "+ Add new". The editor types only a name. An entry has a Delete button that asks first. Hash routes: `#/pages/<id>` and `#/c/<type>/<slug>`.
+* Verified on the real tables with a test entry: create 201, same name 409, list, get, save, publish, save to an unknown entry 404, delete 204 (0 items left), and pages still work. Peter checked it in a browser.
+
 ## Next
 
-* **Collections (next session, before Bedrock).** Clinicians, blog posts and specialties have many entries. Plan agreed 2026-11-02: keys `pk = ENTRY#<type>#<slug>` with DRAFT and PUBLISHED items, and `gsi1pk = ENTRIES#<type>` to list 1 type. Admin routes under `/admin/collections/{type}/entries` (list, create) and `/{slug}` (get, save, publish, delete). The editor types a name and the CMS makes the slug. **Peter writes the create route** (a POST that makes the slug and refuses a taken one), because it is a new pattern. Claude writes the repeat routes and the admin UI (a side bar group per collection, with "+ Add new"). Public collection routes wait for the website build.
+* **Image upload (next, before Bedrock).** The editor picks a file, not a link. Plan: an S3 bucket in the stack and a presigned upload route (Peter writes them, new patterns), then an image widget with a preview (Claude). Alt text stays with the AI service.
 * The Bedrock AI service (R12), built by Peter. It runs on publish and writes the SEO data and the image descriptions (`alt`) for the page. Rule from Peter: on the first publish it always writes them. On a later publish the page already has them, so the service first decides if the changes are big enough to write new ones. The editor never sees these fields. Until the service exists, published pages have no SEO data or image descriptions.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
 * Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.

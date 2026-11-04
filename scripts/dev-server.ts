@@ -13,25 +13,47 @@ import { handler as putPage } from "../lambda/put-pages";
 import { handler as publishPage } from "../lambda/publish-page";
 import { handler as deletePage } from "../lambda/delete-page";
 import { handler as getSchema } from "../lambda/get-schema";
+import { handler as listCollections } from "../lambda/list-collections";
+import { handler as listEntries } from "../lambda/list-entries";
+import { handler as createEntry } from "../lambda/create-entry";
 
 const PORT = Number(process.env.PORT ?? 3001);
 
 type Route = {
   method: string;
-  pattern: RegExp;
+  path: string;
   handler: APIGatewayProxyHandlerV2;
 };
 
-// The same routes that API Gateway will have. ([^/]+) is the {id} path parameter.
+// The same routes that API Gateway will have. {name} is a path parameter.
 const routes: Route[] = [
-  { method: "GET", pattern: /^\/pages\/([^/]+)$/, handler: getPage },
-  { method: "GET", pattern: /^\/admin\/pages$/, handler: listPages },
-  { method: "GET", pattern: /^\/admin\/pages\/([^/]+)$/, handler: getDraft },
-  { method: "PUT", pattern: /^\/admin\/pages\/([^/]+)$/, handler: putPage },
-  { method: "POST", pattern: /^\/admin\/pages\/([^/]+)\/publish$/, handler: publishPage },
-  { method: "DELETE", pattern: /^\/admin\/pages\/([^/]+)$/, handler: deletePage },
-  { method: "GET", pattern: /^\/admin\/schemas\/([^/]+)$/, handler: getSchema },
+  { method: "GET", path: "/pages/{id}", handler: getPage },
+  { method: "GET", path: "/admin/pages", handler: listPages },
+  { method: "GET", path: "/admin/pages/{id}", handler: getDraft },
+  { method: "PUT", path: "/admin/pages/{id}", handler: putPage },
+  { method: "POST", path: "/admin/pages/{id}/publish", handler: publishPage },
+  { method: "DELETE", path: "/admin/pages/{id}", handler: deletePage },
+  { method: "GET", path: "/admin/schemas/{id}", handler: getSchema },
+  { method: "GET", path: "/admin/collections", handler: listCollections },
+  { method: "GET", path: "/admin/collections/{type}/entries", handler: listEntries },
+  { method: "POST", path: "/admin/collections/{type}/entries", handler: createEntry },
+  { method: "GET", path: "/admin/collections/{type}/entries/{slug}", handler: getDraft },
+  { method: "PUT", path: "/admin/collections/{type}/entries/{slug}", handler: putPage },
+  { method: "POST", path: "/admin/collections/{type}/entries/{slug}/publish", handler: publishPage },
+  { method: "DELETE", path: "/admin/collections/{type}/entries/{slug}", handler: deletePage },
 ];
+
+// "/admin/pages/{id}" -> a regex with 1 capture group per {name}, plus the names.
+function compile(path: string): { pattern: RegExp; names: string[] } {
+  const names: string[] = [];
+  const source = path.replace(/\{([a-zA-Z]+)\}/g, (_, name: string) => {
+    names.push(name);
+    return "([^/]+)";
+  });
+  return { pattern: new RegExp(`^${source}$`), names };
+}
+
+const compiled = routes.map((route) => ({ ...route, ...compile(route.path) }));
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -67,7 +89,7 @@ const server = createServer(async (req, res) => {
   const path = new URL(req.url ?? "/", "http://localhost").pathname;
   const started = Date.now();
 
-  const pathMatches = routes.filter((route) => route.pattern.test(path));
+  const pathMatches = compiled.filter((route) => route.pattern.test(path));
   const route = pathMatches.find((r) => r.method === method);
 
   if (!route) {
@@ -77,14 +99,15 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  const id = path.match(route.pattern)?.[1];
+  const values = path.match(route.pattern)?.slice(1) ?? [];
+  const pathParameters = Object.fromEntries(route.names.map((name, i) => [name, decodeURIComponent(values[i])]));
   const body = await readBody(req);
 
   // Only the event fields the handlers read. Real API Gateway events have more.
   const event = {
     rawPath: path,
     headers: req.headers,
-    pathParameters: id ? { id: decodeURIComponent(id) } : undefined,
+    pathParameters: route.names.length > 0 ? pathParameters : undefined,
     body: body.length > 0 ? body : undefined,
     requestContext: { http: { method, path } },
   };

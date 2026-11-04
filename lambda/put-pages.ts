@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { contentKey } from "./content-key";
 
 // 1. Initialize the base client
 const baseClient = new DynamoDBClient({});
@@ -9,10 +10,12 @@ const baseClient = new DynamoDBClient({});
 const client = DynamoDBDocumentClient.from(baseClient);
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
-  const pathId = event.pathParameters?.id;
+  // A page (/admin/pages/{id}) or a collection entry (/admin/collections/{type}/entries/{slug}).
+  const key = contentKey(event);
+  const pathId = key?.id;
   const keys = ["pk", "sk", "gsi1pk", "gsi1sk"];
 
-  if (!pathId) {
+  if (!key) {
     return {
       statusCode: 400,
       headers: { "content-type": "application/json" },
@@ -65,15 +68,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const names: Record<string, string> = {};
   const values: Record<string, unknown> = {};
 
-  Object.keys(fields).forEach((key, i) => {
+  Object.keys(fields).forEach((field, i) => {
     setParts.push(`#f${i} = :v${i}`);
-    names[`#f${i}`] = key;
-    values[`:v${i}`] = fields[key];
+    names[`#f${i}`] = field;
+    values[`:v${i}`] = fields[field];
   });
 
   const params = {
     TableName: process.env.TABLE_NAME,
-    Key: { pk: `PAGE#${pathId}`, sk: "DRAFT" },
+    Key: { pk: key.pk, sk: "DRAFT" },
     UpdateExpression: `SET ${setParts.join(", ")}`,
     ExpressionAttributeNames: names,
     ExpressionAttributeValues: values,

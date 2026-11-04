@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Form from "@rjsf/shadcn";
 import type CoreForm from "@rjsf/core";
 import { customizeValidator } from "@rjsf/validator-ajv8";
@@ -6,13 +6,21 @@ import Ajv2020 from "ajv/dist/2020";
 import type { ErrorTransformer, RJSFSchema } from "@rjsf/utils";
 import {
   ApiError,
+  createEntry,
+  deleteContent,
   getDraft,
   getSchema,
+  listCollections,
+  listEntries,
   listPages,
-  publishPage,
+  publishContent,
   saveDraft,
+  schemaIdOf,
+  type CollectionSummary,
+  type EntrySummary,
   type PageSummary,
   type SchemaRecord,
+  type Target,
 } from "./api";
 import { buildUiSchema, pickSchemaFields } from "./uiSchema";
 import { fillReferenceCollections, publishSchema, zoneSchema, zonesOf } from "./editorSchema";
@@ -23,9 +31,23 @@ const validator = customizeValidator({ AjvClass: Ajv2020, ajvOptionsOverrides: {
 
 type Notice = { kind: "ok" | "error" | "info"; text: string };
 
-function pageIdFromHash(): string | undefined {
-  const match = window.location.hash.match(/^#\/pages\/([^/]+)$/);
-  return match ? decodeURIComponent(match[1]) : undefined;
+// #/pages/<id> is a page. #/c/<type>/<slug> is 1 entry of a collection.
+function targetFromHash(): Target | undefined {
+  const page = window.location.hash.match(/^#\/pages\/([^/]+)$/);
+  if (page) {
+    return { kind: "page", id: decodeURIComponent(page[1]) };
+  }
+  const entry = window.location.hash.match(/^#\/c\/([^/]+)\/([^/]+)$/);
+  if (entry) {
+    return { kind: "entry", type: decodeURIComponent(entry[1]), slug: decodeURIComponent(entry[2]) };
+  }
+  return undefined;
+}
+
+function hashOf(target: Target): string {
+  return target.kind === "page"
+    ? `#/pages/${encodeURIComponent(target.id)}`
+    : `#/c/${encodeURIComponent(target.type)}/${encodeURIComponent(target.slug)}`;
 }
 
 function errorText(error: unknown): string {
@@ -35,27 +57,145 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`block truncate rounded-md px-3 py-2 text-sm transition-colors ${
+        active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-accent hover:text-accent-foreground"
+      }`}
+    >
+      {children}
+    </a>
+  );
+}
+
+// 1 collection in the side bar: its entries, and a small form to add a new one.
+function CollectionGroup({
+  collection,
+  entries,
+  currentHash,
+  onCreated,
+}: {
+  collection: CollectionSummary;
+  entries: EntrySummary[];
+  currentHash: string;
+  onCreated: (slug: string) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (name.trim() === "") {
+      setError("Type a name first.");
+      return;
+    }
+    setBusy(true);
+    setError(undefined);
+    try {
+      const created = await createEntry(collection.type, name);
+      setName("");
+      setAdding(false);
+      onCreated(created.slug);
+    } catch (err) {
+      setError(err instanceof ApiError && err.status === 409 ? "There is already one with this name." : errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="mt-5">
+      <div className="flex items-center justify-between px-3 pb-1">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{collection.title}</h2>
+        <button
+          type="button"
+          onClick={() => {
+            setAdding((value) => !value);
+            setError(undefined);
+          }}
+          className="rounded px-1.5 text-xs font-medium text-primary hover:bg-accent"
+          aria-expanded={adding}
+        >
+          {adding ? "Cancel" : "+ Add new"}
+        </button>
+      </div>
+      {adding ? (
+        <form onSubmit={onSubmit} className="space-y-2 px-3 pb-2">
+          <label className="block text-xs text-muted-foreground" htmlFor={`new-${collection.type}`}>
+            Name
+          </label>
+          <input
+            id={`new-${collection.type}`}
+            autoFocus
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value);
+            }}
+            className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+            placeholder={collection.type === "clinician-profile" ? "e.g. Jess Rebelo" : "e.g. A clear title"}
+          />
+          {error ? <p className="text-xs text-destructive">{error}</p> : null}
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {busy ? "Adding…" : "Add"}
+          </button>
+        </form>
+      ) : null}
+      {entries.length === 0 && !adding ? <p className="px-3 text-sm text-muted-foreground">None yet.</p> : null}
+      <ul className="space-y-1">
+        {entries.map((entry) => {
+          const href = hashOf({ kind: "entry", type: collection.type, slug: entry.slug });
+          return (
+            <li key={entry.slug}>
+              <NavLink href={href} active={href === currentHash}>
+                {entry.title || entry.slug}
+              </NavLink>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function App() {
   const [pages, setPages] = useState<PageSummary[]>([]);
-  const [pagesError, setPagesError] = useState<string>();
-  const [selected, setSelected] = useState<string | undefined>(pageIdFromHash);
+  const [collections, setCollections] = useState<CollectionSummary[]>([]);
+  const [entries, setEntries] = useState<Record<string, EntrySummary[]>>({});
+  const [navError, setNavError] = useState<string>();
+  const [target, setTarget] = useState<Target | undefined>(targetFromHash);
 
-  useEffect(() => {
-    listPages()
-      .then((list) => {
-        setPages(list);
-        if (!pageIdFromHash() && list.length > 0) {
-          window.location.hash = `#/pages/${encodeURIComponent(list[0].id)}`;
-        }
-      })
-      .catch((error) => {
-        setPagesError(errorText(error));
-      });
+  const loadEntries = useCallback(async (type: string) => {
+    const list = await listEntries(type);
+    setEntries((current) => ({ ...current, [type]: list }));
   }, []);
 
   useEffect(() => {
+    Promise.all([listPages(), listCollections()])
+      .then(async ([pageList, collectionList]) => {
+        setPages(pageList);
+        setCollections(collectionList);
+        await Promise.all(collectionList.map((c) => loadEntries(c.type)));
+        if (!targetFromHash() && pageList.length > 0) {
+          window.location.hash = hashOf({ kind: "page", id: pageList[0].id });
+        }
+      })
+      .catch((error) => {
+        setNavError(errorText(error));
+      });
+  }, [loadEntries]);
+
+  useEffect(() => {
     const onHash = () => {
-      setSelected(pageIdFromHash());
+      setTarget(targetFromHash());
     };
     window.addEventListener("hashchange", onHash);
     return () => {
@@ -63,41 +203,60 @@ export function App() {
     };
   }, []);
 
+  const currentHash = target ? hashOf(target) : "";
+
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 shrink-0 border-r bg-card">
+      <aside className="w-64 shrink-0 overflow-y-auto border-r bg-card">
         <div className="border-b px-5 py-4">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Unleashed Potential Therapy Group</p>
           <h1 className="text-lg font-semibold">Content</h1>
         </div>
-        <nav className="p-3" aria-label="Pages">
-          {pagesError ? <p className="px-2 text-sm text-destructive">{pagesError}</p> : null}
-          {!pagesError && pages.length === 0 ? (
-            <p className="px-2 text-sm text-muted-foreground">No pages yet. Run the schema sync.</p>
+        <nav className="p-3 pb-8" aria-label="Content">
+          {navError ? <p className="px-2 text-sm text-destructive">{navError}</p> : null}
+          <h2 className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Pages</h2>
+          {!navError && pages.length === 0 ? (
+            <p className="px-3 text-sm text-muted-foreground">No pages yet. Run the schema sync.</p>
           ) : null}
           <ul className="space-y-1">
-            {pages.map((page) => (
-              <li key={page.id}>
-                <a
-                  href={`#/pages/${encodeURIComponent(page.id)}`}
-                  aria-current={page.id === selected ? "page" : undefined}
-                  className={`block rounded-md px-3 py-2 text-sm transition-colors ${
-                    page.id === selected
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  {page.title || page.id}
-                </a>
-              </li>
-            ))}
+            {pages.map((page) => {
+              const href = hashOf({ kind: "page", id: page.id });
+              return (
+                <li key={page.id}>
+                  <NavLink href={href} active={href === currentHash}>
+                    {page.title || page.id}
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
+          {collections.map((collection) => (
+            <CollectionGroup
+              key={collection.type}
+              collection={collection}
+              entries={entries[collection.type] ?? []}
+              currentHash={currentHash}
+              onCreated={(slug) => {
+                void loadEntries(collection.type);
+                window.location.hash = hashOf({ kind: "entry", type: collection.type, slug });
+              }}
+            />
+          ))}
         </nav>
       </aside>
 
       <main className="min-w-0 flex-1">
-        {selected ? (
-          <PageEditor key={selected} id={selected} />
+        {target ? (
+          <PageEditor
+            key={currentHash}
+            target={target}
+            onDeleted={() => {
+              if (target.kind === "entry") {
+                void loadEntries(target.type);
+              }
+              window.location.hash = pages[0] ? hashOf({ kind: "page", id: pages[0].id }) : "";
+            }}
+          />
         ) : (
           <p className="p-8 text-muted-foreground">Pick a page to edit.</p>
         )}
@@ -144,12 +303,13 @@ const transformErrors: ErrorTransformer = (errors) =>
     return { ...error, message, stack: message };
   });
 
-function PageEditor({ id }: { id: string }) {
+function PageEditor({ target, onDeleted }: { target: Target; onDeleted: () => void }) {
+  const [draftTitle, setDraftTitle] = useState<string>();
   const [schemaRecord, setSchemaRecord] = useState<SchemaRecord>();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [loadError, setLoadError] = useState<string>();
   const [dirty, setDirty] = useState(false);
-  const [busy, setBusy] = useState<"save" | "publish">();
+  const [busy, setBusy] = useState<"save" | "publish" | "delete">();
   const [notice, setNotice] = useState<Notice>();
   const [zone, setZone] = useState<string>();
   const [zonesWithErrors, setZonesWithErrors] = useState<string[]>([]);
@@ -157,16 +317,17 @@ function PageEditor({ id }: { id: string }) {
   const formRef = useRef<CoreForm>(null);
 
   useEffect(() => {
-    Promise.all([getSchema(id), getDraft(id)])
+    Promise.all([getSchema(schemaIdOf(target)), getDraft(target)])
       .then(([record, draft]) => {
         setSchemaRecord(record);
+        setDraftTitle(typeof draft.title === "string" ? draft.title : undefined);
         setFormData(pickSchemaFields(record.schema, draft));
         setZone(zonesOf(record.schema)[0]?.name);
       })
       .catch((error) => {
         setLoadError(errorText(error));
       });
-  }, [id]);
+  }, [target]);
 
   // Warn before leaving with unsaved edits.
   useEffect(() => {
@@ -212,10 +373,10 @@ function PageEditor({ id }: { id: string }) {
       setNotice({ kind: "info", text: "Nothing to save yet." });
       return false;
     }
-    await saveDraft(id, fields);
+    await saveDraft(target, fields);
     setDirty(false);
     return true;
-  }, [fullData, id]);
+  }, [fullData, target]);
 
   const onSave = async () => {
     setBusy("save");
@@ -257,7 +418,7 @@ function PageEditor({ id }: { id: string }) {
       }
       setZonesWithErrors([]);
       await save();
-      await publishPage(id);
+      await publishContent(target);
       setNotice({ kind: "ok", text: "Published. The site shows these changes now." });
     } catch (error) {
       setNotice({ kind: "error", text: `Publish failed: ${errorText(error)}` });
@@ -273,7 +434,23 @@ function PageEditor({ id }: { id: string }) {
     return <p className="p-8 text-muted-foreground">Loading…</p>;
   }
 
-  const title = typeof schemaRecord.schema.title === "string" ? schemaRecord.schema.title : id;
+  const schemaTitle = typeof schemaRecord.schema.title === "string" ? schemaRecord.schema.title : schemaIdOf(target);
+  // A page shows its own name. An entry shows its name, with its collection under it.
+  const title = target.kind === "entry" ? (draftTitle ?? target.slug) : schemaTitle;
+  const onDelete = async () => {
+    if (!window.confirm(`Delete "${title}"? This removes the draft and the published version, and it cannot be undone.`)) {
+      return;
+    }
+    setBusy("delete");
+    try {
+      await deleteContent(target);
+      setDirty(false);
+      onDeleted();
+    } catch (error) {
+      setNotice({ kind: "error", text: `Delete failed: ${errorText(error)}` });
+      setBusy(undefined);
+    }
+  };
   const isHidden = (name: string) => (formData[name] as { hidden?: boolean } | undefined)?.hidden === true;
 
   return (
@@ -281,9 +458,22 @@ function PageEditor({ id }: { id: string }) {
       <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b bg-background/95 px-8 py-4 backdrop-blur">
         <div className="min-w-0">
           <h2 className="truncate text-xl font-semibold">{title}</h2>
-          <p className="text-xs text-muted-foreground">{dirty ? "You have unsaved changes" : "All changes saved"}</p>
+          <p className="text-xs text-muted-foreground">
+            {target.kind === "entry" ? `${schemaTitle} · ` : ""}
+            {dirty ? "You have unsaved changes" : "All changes saved"}
+          </p>
         </div>
         <div className="flex shrink-0 gap-2">
+          {target.kind === "entry" ? (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={busy !== undefined}
+              className="rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+            >
+              {busy === "delete" ? "Deleting…" : "Delete"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onSave}
