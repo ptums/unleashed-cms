@@ -2,20 +2,12 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { randomUUID } from "node:crypto";
+import { reply } from "../utils";
 
 // POST /admin/uploads with { contentType }: returns a signed URL that lets the
 // browser PUT 1 image straight into the media bucket, plus the key it will have.
 
 const s3 = new S3Client({});
-
-// Helper so each return is 1 line. Use it for every response below.
-function reply(statusCode: number, body: unknown) {
-  return {
-    statusCode,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  };
-}
 
 // The allowed types. The key is the exact content type, the value is the file extension.
 const EXTENSIONS: Record<string, string> = {

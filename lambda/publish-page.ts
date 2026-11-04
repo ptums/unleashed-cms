@@ -1,7 +1,12 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { contentKey } from "./content-key";
+import { reply } from "../utils";
 
 // 1. Initialize the base client
 const baseClient = new DynamoDBClient({});
@@ -15,11 +20,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const pathId = key?.id;
 
   if (!key) {
-    return {
-      statusCode: 400,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "no path id" }),
-    };
+    return reply(400, { message: "no path id" });
   }
 
   // 3. Read the draft. Publish copies whatever the draft holds now.
@@ -31,11 +32,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   );
 
   if (!Item) {
-    return {
-      statusCode: 404,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "No page found" }),
-    };
+    return reply(404, { message: "No page found" });
   }
 
   // 4. Drop the keys and the index fields. The published item has no gsi1pk,
@@ -52,11 +49,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     }),
   );
 
-  return {
-    statusCode: 200,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ id: pathId, ...page }),
-  };
+  return reply(200, { id: pathId, ...page });
 };
 
 export default handler;

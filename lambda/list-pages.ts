@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { reply } from "../utils";
 
 // 1. Initialize the base client
 const baseClient = new DynamoDBClient({});
@@ -20,22 +21,15 @@ export const handler: APIGatewayProxyHandlerV2 = async () => {
   );
 
   if (Items?.length === 0) {
-    return {
-      statusCode: 404,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "Not found" }),
-    };
+    return reply(404, { message: "Not found" });
   }
 
   const pages = (Items ?? []).map((item) => ({
     id: item.pk.replace(/^PAGE#/, ""),
     title: item.title,
   }));
-  return {
-    statusCode: 200,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(pages),
-  };
+
+  return reply(200, pages);
 };
 
 export default handler;

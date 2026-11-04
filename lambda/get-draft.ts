@@ -2,6 +2,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { contentKey } from "./content-key";
+import { reply } from "../utils";
 
 // 1. Initialize the base client
 const baseClient = new DynamoDBClient({});
@@ -15,11 +16,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const pathId = key?.id;
 
   if (!key) {
-    return {
-      statusCode: 400,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "no path id" }),
-    };
+    return reply(400, { message: "no path id" });
   }
 
   const { Item } = await client.send(
@@ -30,20 +27,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   );
 
   if (!Item) {
-    return {
-      statusCode: 404,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "No page found" }),
-    };
+    return reply(404, { message: "No page found" });
   }
 
   const { pk, sk, gsi1pk, gsi1sk, ...page } = Item;
 
-  return {
-    statusCode: 200,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ id: pathId, ...page }),
-  };
+  return reply(200, { id: pathId, ...page });
 };
 
 export default handler;

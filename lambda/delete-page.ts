@@ -1,7 +1,11 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  TransactWriteCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { contentKey } from "./content-key";
+import { reply } from "../utils";
 
 // 1. Initialize the base client
 const baseClient = new DynamoDBClient({});
@@ -15,11 +19,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const pathId = key?.id;
 
   if (!key) {
-    return {
-      statusCode: 400,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "no path id" }),
-    };
+    return reply(400, { message: "no path id" });
   }
 
   // 3. Delete the draft and the published copy together, so a page is never half deleted.
@@ -45,20 +45,16 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }),
     );
   } catch (error) {
-    if (error instanceof Error && error.name === "TransactionCanceledException") {
-      return {
-        statusCode: 404,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "No page found" }),
-      };
+    if (
+      error instanceof Error &&
+      error.name === "TransactionCanceledException"
+    ) {
+      return reply(404, { message: "No page found" });
     }
     throw error;
   }
 
-  return {
-    statusCode: 204,
-    body: "",
-  };
+  return { statusCode: 204, body: "" };
 };
 
 export default handler;

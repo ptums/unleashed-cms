@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { reply } from "../utils";
 
 // GET /admin/collections: the collection types (clinicians, blog posts ...) for the side bar.
 //
@@ -28,7 +29,8 @@ export const handler: APIGatewayProxyHandlerV2 = async () => {
 
   const collections = items
     .map((item) => {
-      const schema = typeof item.schema === "string" ? JSON.parse(item.schema) : item.schema;
+      const schema =
+        typeof item.schema === "string" ? JSON.parse(item.schema) : item.schema;
       return {
         type: String(item.pk).replace(/^SCHEMA#/, ""),
         title: typeof schema?.title === "string" ? schema.title : undefined,
@@ -39,11 +41,7 @@ export const handler: APIGatewayProxyHandlerV2 = async () => {
     .map(({ type, title }) => ({ type, title: title ?? type }))
     .sort((a, b) => a.title.localeCompare(b.title));
 
-  return {
-    statusCode: 200,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(collections),
-  };
+  return reply(200, collections);
 };
 
 export default handler;

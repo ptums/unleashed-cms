@@ -5,27 +5,9 @@ import {
   PutCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { reply, toSlug } from "../utils";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-
-// Helper so each return is 1 line. Use it for every response below.
-function reply(statusCode: number, body: unknown) {
-  return {
-    statusCode,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  };
-}
-
-// "Jéss Rebelo, LCSW" -> "jess-rebelo-lcsw"
-function toSlug(name: string): string {
-  return name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   // 1. The type comes from the path: /admin/collections/{type}/entries
