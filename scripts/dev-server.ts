@@ -2,7 +2,7 @@
 // on this machine against the real DynamoDB tables. Local use only: it binds to
 // 127.0.0.1 and has no login check.
 //
-// Run: TABLE_NAME=<content table> SCHEMA_TABLE_NAME=<schema table> AWS_REGION=us-east-2 npm run dev
+// Run: TABLE_NAME=<content table> SCHEMA_TABLE_NAME=<schema table> MEDIA_BUCKET_NAME=<media bucket> AWS_REGION=us-east-2 npm run dev
 
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import type { APIGatewayProxyHandlerV2, APIGatewayProxyResultV2 } from "aws-lambda";
@@ -16,6 +16,7 @@ import { handler as getSchema } from "../lambda/get-schema";
 import { handler as listCollections } from "../lambda/list-collections";
 import { handler as listEntries } from "../lambda/list-entries";
 import { handler as createEntry } from "../lambda/create-entry";
+import { handler as createUpload } from "../lambda/create-upload";
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -41,6 +42,7 @@ const routes: Route[] = [
   { method: "PUT", path: "/admin/collections/{type}/entries/{slug}", handler: putPage },
   { method: "POST", path: "/admin/collections/{type}/entries/{slug}/publish", handler: publishPage },
   { method: "DELETE", path: "/admin/collections/{type}/entries/{slug}", handler: deletePage },
+  { method: "POST", path: "/admin/uploads", handler: createUpload },
 ];
 
 // "/admin/pages/{id}" -> a regex with 1 capture group per {name}, plus the names.
@@ -129,7 +131,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
-for (const name of ["TABLE_NAME", "SCHEMA_TABLE_NAME"]) {
+for (const name of ["TABLE_NAME", "SCHEMA_TABLE_NAME", "MEDIA_BUCKET_NAME"]) {
   if (!process.env[name]) {
     console.error(`${name} is not set`);
     process.exit(1);
