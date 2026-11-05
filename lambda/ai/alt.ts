@@ -230,6 +230,9 @@ export async function addAltText(
   const images = findImages(page, pageTitle);
 
   for (const found of images) {
+    if (found.image.alt) {
+      continue;
+    }
     const alt = await describeImage(found.assetId, found.context);
     found.image.alt = alt;
   }
