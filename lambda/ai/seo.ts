@@ -68,7 +68,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   }
 
   // JSON.parse also accepts "null", "3" and "[]". Only an object is a page.
-  if (content === null || typeof content !== "object" || Array.isArray(content)) {
+  if (
+    content === null ||
+    typeof content !== "object" ||
+    Array.isArray(content)
+  ) {
     return reply(400, { message: "body must be a JSON object" });
   }
 
@@ -78,7 +82,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   // The conversation so far. A retry adds to it, so the model sees its own answer
   // and what was wrong with it.
   const messages: Message[] = [
-    { role: "user", content: [{ text: `Document Content:\n${JSON.stringify(page)}` }] },
+    {
+      role: "user",
+      content: [{ text: `Document Content:\n${JSON.stringify(page)}` }],
+    },
   ];
 
   try {
@@ -107,7 +114,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       const block = answer?.content?.find((b) => b.toolUse);
       if (!answer || !block?.toolUse) {
         console.error("The model did not call save_seo", response.output);
-        return reply(502, { message: "The AI service did not return SEO data" });
+        return reply(502, {
+          message: "The AI service did not return SEO data",
+        });
       }
 
       // safeParse does not throw. It says if the answer passed, and why not.
@@ -119,11 +128,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       // Tell the model what was wrong, as the result of its tool call, and ask again.
       const problems = checked.error.issues.map((issue) => {
         const field = String(issue.path[0]);
-        const value = (block.toolUse?.input as Record<string, unknown> | undefined)?.[field];
+        const value = (
+          block.toolUse?.input as Record<string, unknown> | undefined
+        )?.[field];
         const length = typeof value === "string" ? value.length : 0;
         return `${field} is ${length} characters. The limit is ${SEO_LIMITS[field as keyof typeof SEO_LIMITS]}.`;
       });
-      console.warn(`SEO answer ${attempt} failed the check: ${problems.join(" ")}`);
+      console.warn(
+        `SEO answer ${attempt} failed the check: ${problems.join(" ")}`,
+      );
       messages.push(answer, {
         role: "user",
         content: [
@@ -131,14 +144,20 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
             toolResult: {
               toolUseId: block.toolUse.toolUseId,
               status: "error",
-              content: [{ text: `${problems.join(" ")} Call save_seo again with shorter text.` }],
+              content: [
+                {
+                  text: `${problems.join(" ")} Call save_seo again with shorter text.`,
+                },
+              ],
             },
           },
         ],
       });
     }
 
-    return reply(502, { message: "The AI service returned SEO data that breaks the limits" });
+    return reply(502, {
+      message: "The AI service returned SEO data that breaks the limits",
+    });
   } catch (error) {
     console.error("Failed to call Bedrock for SEO", error);
     return reply(500, {
