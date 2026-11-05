@@ -8,6 +8,7 @@ import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 
 export class UnleashedCmsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -22,7 +23,10 @@ export class UnleashedCmsStack extends cdk.Stack {
       cors: [
         {
           allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
-          allowedOrigins: ["http://localhost:5173"],
+          allowedOrigins: [
+            "http://localhost:5173",
+            "https://cms.uptherapygroup.com",
+          ],
           allowedHeaders: ["*"],
           maxAge: 3000,
         },
@@ -79,7 +83,21 @@ export class UnleashedCmsStack extends cdk.Stack {
     table.grantReadData(listPagesFn);
 
     // GET ROUTE
-    const api = new apigwv2.HttpApi(this, "CmsApi");
+    const api = new apigwv2.HttpApi(this, "CmsApi", {
+      corsPreflight: {
+        allowOrigins: [
+          "http://localhost:5173",
+          "https://cms.uptherapygroup.com",
+        ],
+        allowMethods: [
+          CorsHttpMethod.GET,
+          CorsHttpMethod.POST,
+          CorsHttpMethod.PUT,
+          CorsHttpMethod.DELETE,
+        ],
+        allowHeaders: ["Content-Type", "Authorization"],
+      },
+    });
 
     // Rate Limiting
     const stage = api.defaultStage!.node.defaultChild as apigwv2.CfnStage;
@@ -141,13 +159,28 @@ export class UnleashedCmsStack extends cdk.Stack {
       return fn;
     };
 
-    const getDraftFn = adminRoute("GetDraftFn", "lambda/get-draft.ts", apigwv2.HttpMethod.GET, [PAGE, ENTRY]);
+    const getDraftFn = adminRoute(
+      "GetDraftFn",
+      "lambda/get-draft.ts",
+      apigwv2.HttpMethod.GET,
+      [PAGE, ENTRY],
+    );
     table.grantReadData(getDraftFn);
 
-    const putDraftFn = adminRoute("PutDraftFn", "lambda/put-pages.ts", apigwv2.HttpMethod.PUT, [PAGE, ENTRY]);
+    const putDraftFn = adminRoute(
+      "PutDraftFn",
+      "lambda/put-pages.ts",
+      apigwv2.HttpMethod.PUT,
+      [PAGE, ENTRY],
+    );
     table.grantWriteData(putDraftFn);
 
-    const deleteFn = adminRoute("DeleteFn", "lambda/delete-page.ts", apigwv2.HttpMethod.DELETE, [PAGE, ENTRY]);
+    const deleteFn = adminRoute(
+      "DeleteFn",
+      "lambda/delete-page.ts",
+      apigwv2.HttpMethod.DELETE,
+      [PAGE, ENTRY],
+    );
     table.grantWriteData(deleteFn);
 
     // Publish runs the AI steps, so it needs more time than the 3 s default (a first publish took 3.3 s).
@@ -163,27 +196,59 @@ export class UnleashedCmsStack extends cdk.Stack {
     publishFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:InvokeModel"], // the Converse API uses this action
-        resources: [`arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-lite-v1:0`],
+        resources: [
+          `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-lite-v1:0`,
+        ],
       }),
     );
 
-    const getSchemaFn = adminRoute("GetSchemaFn", "lambda/get-schema.ts", apigwv2.HttpMethod.GET, ["/admin/schemas/{id}"]);
+    const getSchemaFn = adminRoute(
+      "GetSchemaFn",
+      "lambda/get-schema.ts",
+      apigwv2.HttpMethod.GET,
+      ["/admin/schemas/{id}"],
+    );
     schemaTable.grantReadData(getSchemaFn);
 
-    const listCollectionsFn = adminRoute("ListCollectionsFn", "lambda/list-collections.ts", apigwv2.HttpMethod.GET, ["/admin/collections"]);
+    const listCollectionsFn = adminRoute(
+      "ListCollectionsFn",
+      "lambda/list-collections.ts",
+      apigwv2.HttpMethod.GET,
+      ["/admin/collections"],
+    );
     schemaTable.grantReadData(listCollectionsFn);
 
-    const listEntriesFn = adminRoute("ListEntriesFn", "lambda/list-entries.ts", apigwv2.HttpMethod.GET, ["/admin/collections/{type}/entries"]);
+    const listEntriesFn = adminRoute(
+      "ListEntriesFn",
+      "lambda/list-entries.ts",
+      apigwv2.HttpMethod.GET,
+      ["/admin/collections/{type}/entries"],
+    );
     table.grantReadData(listEntriesFn);
 
-    const createEntryFn = adminRoute("CreateEntryFn", "lambda/create-entry.ts", apigwv2.HttpMethod.POST, ["/admin/collections/{type}/entries"]);
+    const createEntryFn = adminRoute(
+      "CreateEntryFn",
+      "lambda/create-entry.ts",
+      apigwv2.HttpMethod.POST,
+      ["/admin/collections/{type}/entries"],
+    );
     schemaTable.grantReadData(createEntryFn);
     table.grantWriteData(createEntryFn);
 
-    const createUploadFn = adminRoute("CreateUploadFn", "lambda/create-upload.ts", apigwv2.HttpMethod.POST, ["/admin/uploads"]);
+    const createUploadFn = adminRoute(
+      "CreateUploadFn",
+      "lambda/create-upload.ts",
+      apigwv2.HttpMethod.POST,
+      ["/admin/uploads"],
+    );
     mediaBucket.grantPut(createUploadFn);
 
-    const viewUploadFn = adminRoute("ViewUploadFn", "lambda/view-upload.ts", apigwv2.HttpMethod.GET, ["/admin/uploads/{file}"]);
+    const viewUploadFn = adminRoute(
+      "ViewUploadFn",
+      "lambda/view-upload.ts",
+      apigwv2.HttpMethod.GET,
+      ["/admin/uploads/{file}"],
+    );
     mediaBucket.grantRead(viewUploadFn);
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
