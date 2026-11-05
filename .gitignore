@@ -18,3 +18,6 @@ cmds.txt
 
 # Admin UI build output
 admin/dist
+
+# The admin UI build settings for AWS (no secrets)
+!admin/.env.production

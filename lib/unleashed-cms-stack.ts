@@ -9,6 +9,9 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
+import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
+import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 
 export class UnleashedCmsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -31,6 +34,29 @@ export class UnleashedCmsStack extends cdk.Stack {
           maxAge: 3000,
         },
       ],
+    });
+
+    const adminBucket = new s3.Bucket(this, "AdminBucket", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    const adminSite = new cloudfront.Distribution(this, "AdminSite", {
+      defaultRootObject: "index.html",
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(adminBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+    });
+
+    new s3deploy.BucketDeployment(this, "AdminFiles", {
+      sources: [s3deploy.Source.asset("admin/dist")], // the output of npm run build
+      destinationBucket: adminBucket,
+      distribution: adminSite,
+      distributionPaths: ["/*"], // drop all old copies in CloudFront
     });
 
     // GET A PAGE
@@ -254,6 +280,9 @@ export class UnleashedCmsStack extends cdk.Stack {
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new cdk.CfnOutput(this, "MediaBucketName", {
       value: mediaBucket.bucketName,
+    });
+    new cdk.CfnOutput(this, "AdminUrl", {
+      value: `https://${adminSite.distributionDomainName}`,
     });
   }
 }

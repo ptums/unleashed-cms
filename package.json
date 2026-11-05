@@ -8,7 +8,8 @@
     "cdk": "cdk",
     "dev": "tsx scripts/dev-server.ts",
     "sync": "tsx scripts/sync-schemas.ts",
-    "json-to-zod": "tsx scripts/json-to-zod.ts"
+    "json-to-zod": "tsx scripts/json-to-zod.ts",
+    "deploy": "npm --prefix admin run build && cdk deploy"
   },
   "devDependencies": {
     "@swc/core": "^1.15.0",
