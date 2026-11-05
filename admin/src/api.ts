@@ -17,10 +17,25 @@ export class ApiError extends Error {
   }
 }
 
+// Auth.tsx sets this after sign-in. Each call asks for a token, and Clerk renews it when it is old.
+let getToken: () => Promise<string | null> = async () => null;
+
+export function setTokenGetter(getter: () => Promise<string | null>) {
+  getToken = getter;
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) {
+    headers["content-type"] = "application/json";
+  }
+  const token = await getToken();
+  if (token) {
+    headers.authorization = `Bearer ${token}`;
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await res.text();

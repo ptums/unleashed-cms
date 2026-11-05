@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Form from "@rjsf/shadcn";
+import { UserButton } from "@clerk/react";
 import type CoreForm from "@rjsf/core";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import Ajv2020 from "ajv/dist/2020";
@@ -211,9 +212,12 @@ export function App() {
   return (
     <div className="flex min-h-screen">
       <aside className="w-64 shrink-0 overflow-y-auto border-r bg-card">
-        <div className="border-b px-5 py-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Unleashed Potential Therapy Group</p>
-          <h1 className="text-lg font-semibold">Content</h1>
+        <div className="flex items-start justify-between gap-2 border-b px-5 py-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Unleashed Potential Therapy Group</p>
+            <h1 className="text-lg font-semibold">Content</h1>
+          </div>
+          <UserButton />
         </div>
         <nav className="p-3 pb-8" aria-label="Content">
           {navError ? <p className="px-2 text-sm text-destructive">{navError}</p> : null}
