@@ -6,6 +6,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 
 export class UnleashedCmsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -59,6 +60,23 @@ export class UnleashedCmsStack extends cdk.Stack {
 
     table.grant(getPageFn, "dynamodb:GetItem");
 
+    // AUTHORIZATION
+    const clerkAuthorizer = new HttpJwtAuthorizer(
+      "ClerkAuthorizer", // 1. an id
+      "https://real-buffalo-6983.clerk.accounts.dev", // 2. who signs the tokens (the issuer)
+      { jwtAudience: ["unleashed-cms"] }, // 3. options: the aud the token must have
+    );
+
+    const listPagesFn = new NodejsFunction(this, "ListPagesFn", {
+      entry: "lambda/list-pages.ts",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      environment: {
+        TABLE_NAME: table.tableName,
+      },
+    });
+
+    table.grantReadData(listPagesFn);
+
     // GET ROUTE
     const api = new apigwv2.HttpApi(this, "CmsApi");
 
@@ -73,6 +91,16 @@ export class UnleashedCmsStack extends cdk.Stack {
       path: "/pages/{id}",
       methods: [apigwv2.HttpMethod.GET],
       integration: new HttpLambdaIntegration("GetPageIntegration", getPageFn),
+    });
+
+    api.addRoutes({
+      path: "/admin/pages",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new HttpLambdaIntegration(
+        "ListPagesIntegration",
+        listPagesFn,
+      ),
+      authorizer: clerkAuthorizer,
     });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
