@@ -7,6 +7,7 @@ import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export class UnleashedCmsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -102,6 +103,88 @@ export class UnleashedCmsStack extends cdk.Stack {
       ),
       authorizer: clerkAuthorizer,
     });
+
+    // THE OTHER ADMIN ROUTES (Claude). Each one copies the GET /admin/pages pattern:
+    // 1 Lambda, the grants it needs, and its routes with the Clerk authorizer.
+    // A page ({id}) and a collection entry ({type}/{slug}) share 1 Lambda (see content-key.ts).
+    const PAGE = "/admin/pages/{id}";
+    const ENTRY = "/admin/collections/{type}/entries/{slug}";
+
+    const env = {
+      TABLE_NAME: table.tableName,
+      SCHEMA_TABLE_NAME: schemaTable.tableName,
+      MEDIA_BUCKET_NAME: mediaBucket.bucketName,
+    };
+
+    // Makes 1 admin Lambda and adds its routes, all behind the Clerk authorizer.
+    const adminRoute = (
+      id: string,
+      entry: string,
+      method: apigwv2.HttpMethod,
+      paths: string[],
+      options: { timeout?: cdk.Duration; memorySize?: number } = {},
+    ) => {
+      const fn = new NodejsFunction(this, id, {
+        entry,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        environment: env,
+        ...options,
+      });
+      for (const path of paths) {
+        api.addRoutes({
+          path,
+          methods: [method],
+          integration: new HttpLambdaIntegration(`${id}Integration`, fn),
+          authorizer: clerkAuthorizer,
+        });
+      }
+      return fn;
+    };
+
+    const getDraftFn = adminRoute("GetDraftFn", "lambda/get-draft.ts", apigwv2.HttpMethod.GET, [PAGE, ENTRY]);
+    table.grantReadData(getDraftFn);
+
+    const putDraftFn = adminRoute("PutDraftFn", "lambda/put-pages.ts", apigwv2.HttpMethod.PUT, [PAGE, ENTRY]);
+    table.grantWriteData(putDraftFn);
+
+    const deleteFn = adminRoute("DeleteFn", "lambda/delete-page.ts", apigwv2.HttpMethod.DELETE, [PAGE, ENTRY]);
+    table.grantWriteData(deleteFn);
+
+    // Publish runs the AI steps, so it needs more time than the 3 s default (a first publish took 3.3 s).
+    const publishFn = adminRoute(
+      "PublishFn",
+      "lambda/publish-page.ts",
+      apigwv2.HttpMethod.POST,
+      [`${PAGE}/publish`, `${ENTRY}/publish`],
+      { timeout: cdk.Duration.seconds(60), memorySize: 512 },
+    );
+    table.grantReadWriteData(publishFn);
+    mediaBucket.grantRead(publishFn); // alt text reads each image
+    publishFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["bedrock:InvokeModel"], // the Converse API uses this action
+        resources: [`arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-lite-v1:0`],
+      }),
+    );
+
+    const getSchemaFn = adminRoute("GetSchemaFn", "lambda/get-schema.ts", apigwv2.HttpMethod.GET, ["/admin/schemas/{id}"]);
+    schemaTable.grantReadData(getSchemaFn);
+
+    const listCollectionsFn = adminRoute("ListCollectionsFn", "lambda/list-collections.ts", apigwv2.HttpMethod.GET, ["/admin/collections"]);
+    schemaTable.grantReadData(listCollectionsFn);
+
+    const listEntriesFn = adminRoute("ListEntriesFn", "lambda/list-entries.ts", apigwv2.HttpMethod.GET, ["/admin/collections/{type}/entries"]);
+    table.grantReadData(listEntriesFn);
+
+    const createEntryFn = adminRoute("CreateEntryFn", "lambda/create-entry.ts", apigwv2.HttpMethod.POST, ["/admin/collections/{type}/entries"]);
+    schemaTable.grantReadData(createEntryFn);
+    table.grantWriteData(createEntryFn);
+
+    const createUploadFn = adminRoute("CreateUploadFn", "lambda/create-upload.ts", apigwv2.HttpMethod.POST, ["/admin/uploads"]);
+    mediaBucket.grantPut(createUploadFn);
+
+    const viewUploadFn = adminRoute("ViewUploadFn", "lambda/view-upload.ts", apigwv2.HttpMethod.GET, ["/admin/uploads/{file}"]);
+    mediaBucket.grantRead(viewUploadFn);
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new cdk.CfnOutput(this, "MediaBucketName", {
