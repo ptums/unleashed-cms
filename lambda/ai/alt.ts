@@ -223,7 +223,11 @@ export function findImages(
   return found;
 }
 
-export type AddedAlt = { path: (string | number)[]; assetId: string; alt: string };
+export type AddedAlt = {
+  path: (string | number)[];
+  assetId: string;
+  alt: string;
+};
 
 // Writes alt into the page (in place) for each image that has none.
 // Returns the new alt texts, so publish can save them to the draft too.

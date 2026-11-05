@@ -210,8 +210,20 @@ The editor picks a file. There is no link to paste.
 * Verified: a wrong type gets 403, an upload and view work through the dev proxy, and every non-SEO image in all 10 schemas gets the picker. Peter uploaded a portrait in a browser, and the preview stayed after a reload.
 * Later, with the deploy: the CDK routes and S3 grants for the 2 Lambdas, `cms.uptherapygroup.com` in the CORS origins, and CloudFront so the website can show the images.
 
+## Step 13: the AI service on Bedrock (2026-11-04, SEO and alt text by Peter, the guardrail and the publish wiring by Claude)
+
+On publish, the AI writes the SEO data and a description (`alt`) for each image. The editor never sees these fields.
+
+* **Model:** Nova Lite (`amazon.nova-lite-v1:0`) in us-east-2, set by `BEDROCK_MODEL_ID`. The Claude models gave AccessDeniedException on this account.
+* **SEO (Peter):** `lambda/ai/seo.ts`. `generateSeo(page)` calls the Converse API with a forced `save_seo` tool, so the answer is an object, not text. Zod checks the limits (title 60, description 155). If a check fails, it tells the model what was wrong and tries 1 more time. The `POST` handler in the same file calls the same function.
+* **Alt text (Peter):** `lambda/ai/alt.ts`. `findImages` walks the page and finds every object with an `assetId`, at any depth. `describeImage` loads the file from S3 and sends it to the model with the page title and the place on the page. It uses the same forced tool, check and retry (5 to 160 characters).
+* **Guardrail for SEO (Claude):** `lambda/ai/changes.ts`. `needsSeo` returns true on the first publish, or when the page has no SEO. After that, it is true only when more than 300 characters of page text changed. Keys that are not page text (`id`, `seo`, `assetId`, `alt`) do not count.
+* **Guardrail for alt text (Peter):** an image that has `alt` is skipped. The picker drops `alt` on a new upload, so only new pictures get a new description.
+* **Publish (Claude):** `lambda/publish-page.ts` adds the alt text, then picks the SEO (new, or the old one), and saves both on the PUBLISHED item. It also saves each new `alt` to the DRAFT, so the next publish skips that image. That update checks that the draft still has the same `assetId`. If the AI fails, the page still publishes, and the next publish tries again.
+* Verified on the real table with a test page (deleted after): first publish made the SEO and 2 alt texts (3.3 s). A small edit kept the old SEO with no AI calls (0.1 s). A big edit made new SEO, and the retry fixed a 61-character title.
+* Later, with the deploy: the publish Lambda needs a longer timeout (the default is 3 s), plus Bedrock and S3 read grants.
+
 ## Next
 
-* The Bedrock AI service (R12), built by Peter. It runs on publish and writes the SEO data and the image descriptions (`alt`) for the page. Rule from Peter: on the first publish it always writes them. On a later publish the page already has them, so the service first decides if the changes are big enough to write new ones. The editor never sees these fields. Until the service exists, published pages have no SEO data or image descriptions.
 * Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
 * Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.
