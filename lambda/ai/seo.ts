@@ -58,6 +58,92 @@ Rules:
 4. Use only facts from the page. Use a warm, calm tone. Do not promise results.
 Always answer by calling the save_seo tool.`;
 
+// The answer could not be used: the model did not call the tool, or it broke the limits twice.
+export class SeoAnswerError extends Error {}
+
+// Makes the SEO title and description for 1 page. Publish calls this, and so does the handler below.
+export async function generateSeo(content: Record<string, unknown>) {
+  // id is a database key, and seo is the old SEO (the model would copy it). Neither helps.
+  const { id: _id, seo: _seo, ...page } = content;
+
+  // The conversation so far. A retry adds to it, so the model sees its own answer
+  // and what was wrong with it.
+  const messages: Message[] = [
+    {
+      role: "user",
+      content: [{ text: `Document Content:\n${JSON.stringify(page)}` }],
+    },
+  ];
+
+  // 2 tries: the first answer, and 1 retry if the answer breaks a limit.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const response = await client.send(
+      new ConverseCommand({
+        modelId,
+        system: [{ text: systemPrompt }],
+        messages,
+        inferenceConfig: {
+          temperature: 0.2,
+          topP: 0.9,
+          maxTokens: 500,
+        },
+        toolConfig: {
+          tools: [SAVE_SEO],
+          // Forced: the model must call save_seo. It cannot answer with free text.
+          toolChoice: { tool: { name: "save_seo" } },
+        },
+      }),
+    );
+
+    // content is a list of blocks. Find the 1 that holds the tool call.
+    const answer = response.output?.message;
+    const block = answer?.content?.find((b) => b.toolUse);
+    if (!answer || !block?.toolUse) {
+      console.error("The model did not call save_seo", response.output);
+      throw new SeoAnswerError("The AI service did not return SEO data");
+    }
+
+    // safeParse does not throw. It says if the answer passed, and why not.
+    const checked = seoResult.safeParse(block.toolUse.input);
+    if (checked.success) {
+      return checked.data;
+    }
+
+    // Tell the model what was wrong, as the result of its tool call, and ask again.
+    const problems = checked.error.issues.map((issue) => {
+      const field = String(issue.path[0]);
+      const value = (
+        block.toolUse?.input as Record<string, unknown> | undefined
+      )?.[field];
+      const length = typeof value === "string" ? value.length : 0;
+      return `${field} is ${length} characters. The limit is ${SEO_LIMITS[field as keyof typeof SEO_LIMITS]}.`;
+    });
+    console.warn(
+      `SEO answer ${attempt} failed the check: ${problems.join(" ")}`,
+    );
+    messages.push(answer, {
+      role: "user",
+      content: [
+        {
+          toolResult: {
+            toolUseId: block.toolUse.toolUseId,
+            status: "error",
+            content: [
+              {
+                text: `${problems.join(" ")} Call save_seo again with shorter text.`,
+              },
+            ],
+          },
+        },
+      ],
+    });
+  }
+
+  throw new SeoAnswerError(
+    "The AI service returned SEO data that breaks the limits",
+  );
+}
+
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   let content: Record<string, unknown>;
 
@@ -76,89 +162,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     return reply(400, { message: "body must be a JSON object" });
   }
 
-  // id is a database key, and seo is the old SEO (the model would copy it). Neither helps.
-  const { id: _id, seo: _seo, ...page } = content;
-
-  // The conversation so far. A retry adds to it, so the model sees its own answer
-  // and what was wrong with it.
-  const messages: Message[] = [
-    {
-      role: "user",
-      content: [{ text: `Document Content:\n${JSON.stringify(page)}` }],
-    },
-  ];
-
   try {
-    // 2 tries: the first answer, and 1 retry if the answer breaks a limit.
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      const response = await client.send(
-        new ConverseCommand({
-          modelId,
-          system: [{ text: systemPrompt }],
-          messages,
-          inferenceConfig: {
-            temperature: 0.2,
-            topP: 0.9,
-            maxTokens: 500,
-          },
-          toolConfig: {
-            tools: [SAVE_SEO],
-            // Forced: the model must call save_seo. It cannot answer with free text.
-            toolChoice: { tool: { name: "save_seo" } },
-          },
-        }),
-      );
-
-      // content is a list of blocks. Find the 1 that holds the tool call.
-      const answer = response.output?.message;
-      const block = answer?.content?.find((b) => b.toolUse);
-      if (!answer || !block?.toolUse) {
-        console.error("The model did not call save_seo", response.output);
-        return reply(502, {
-          message: "The AI service did not return SEO data",
-        });
-      }
-
-      // safeParse does not throw. It says if the answer passed, and why not.
-      const checked = seoResult.safeParse(block.toolUse.input);
-      if (checked.success) {
-        return reply(200, checked.data);
-      }
-
-      // Tell the model what was wrong, as the result of its tool call, and ask again.
-      const problems = checked.error.issues.map((issue) => {
-        const field = String(issue.path[0]);
-        const value = (
-          block.toolUse?.input as Record<string, unknown> | undefined
-        )?.[field];
-        const length = typeof value === "string" ? value.length : 0;
-        return `${field} is ${length} characters. The limit is ${SEO_LIMITS[field as keyof typeof SEO_LIMITS]}.`;
-      });
-      console.warn(
-        `SEO answer ${attempt} failed the check: ${problems.join(" ")}`,
-      );
-      messages.push(answer, {
-        role: "user",
-        content: [
-          {
-            toolResult: {
-              toolUseId: block.toolUse.toolUseId,
-              status: "error",
-              content: [
-                {
-                  text: `${problems.join(" ")} Call save_seo again with shorter text.`,
-                },
-              ],
-            },
-          },
-        ],
-      });
-    }
-
-    return reply(502, {
-      message: "The AI service returned SEO data that breaks the limits",
-    });
+    return reply(200, await generateSeo(content));
   } catch (error) {
+    if (error instanceof SeoAnswerError) {
+      return reply(502, { message: error.message });
+    }
     console.error("Failed to call Bedrock for SEO", error);
     return reply(500, {
       message: "Internal server error processing SEO optimization",

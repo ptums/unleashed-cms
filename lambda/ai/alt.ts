@@ -223,19 +223,30 @@ export function findImages(
   return found;
 }
 
+export type AddedAlt = { path: (string | number)[]; assetId: string; alt: string };
+
+// Writes alt into the page (in place) for each image that has none.
+// Returns the new alt texts, so publish can save them to the draft too.
+// 1 failed image does not stop the others. It gets alt on the next publish.
 export async function addAltText(
   page: Record<string, unknown>,
   pageTitle: string,
-) {
+): Promise<AddedAlt[]> {
   const images = findImages(page, pageTitle);
+  const added: AddedAlt[] = [];
 
   for (const found of images) {
     if (found.image.alt) {
       continue;
     }
-    const alt = await describeImage(found.assetId, found.context);
-    found.image.alt = alt;
+    try {
+      const alt = await describeImage(found.assetId, found.context);
+      found.image.alt = alt;
+      added.push({ path: found.path, assetId: found.assetId, alt });
+    } catch (error) {
+      console.error(`No alt text for ${found.assetId}`, error);
+    }
   }
 
-  return page;
+  return added;
 }
