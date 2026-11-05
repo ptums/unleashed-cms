@@ -223,7 +223,20 @@ On publish, the AI writes the SEO data and a description (`alt`) for each image.
 * Verified on the real table with a test page (deleted after): first publish made the SEO and 2 alt texts (3.3 s). A small edit kept the old SEO with no AI calls (0.1 s). A big edit made new SEO, and the retry fixed a 61-character title.
 * Later, with the deploy: the publish Lambda needs a longer timeout (the default is 3 s), plus Bedrock and S3 read grants.
 
+## Step 14: Clerk auth (2026-11-04, the Clerk app and the authorizer by Peter, the sign-in screen and the other routes by Claude)
+
+Only invited people can sign in, and API Gateway refuses each admin call that has no valid token.
+
+* **Clerk app (Peter):** `Unleashed Potential CMS`, Development instance, issuer `https://real-buffalo-6983.clerk.accounts.dev`. Sign-in is by email only. The sign-up mode is **Restricted**, so a new user needs an invite.
+* **JWT template (Peter):** `cms`, with the claim `{ "aud": "unleashed-cms" }`. A normal Clerk session token has no `aud`, and the API Gateway JWT authorizer must check one. The template must be in the same instance (Development) as the key.
+* **Sign-in screen (Claude):** `admin/src/Auth.tsx` uses `@clerk/react`. Signed out, the editor sees the Clerk sign-in box. Signed in, the editor sees the CMS and a user button for sign out. The publishable key is in `admin/.env.local` (`VITE_CLERK_PUBLISHABLE_KEY`, ignored by git). The secret key is not used.
+* **Token on each call (Claude):** `api.ts` asks Clerk for a `cms` token on each call and sends it as `Authorization: Bearer`. The token lasts 60 s, and Clerk renews it. Uploads to S3 do not send it, because the signed link is the permission.
+* **Authorizer (Peter):** `HttpJwtAuthorizer` in the stack, with the Clerk issuer and `jwtAudience: ["unleashed-cms"]`. It checks the signature, `iss`, `aud` and the expiry before the Lambda runs. The first route was `GET /admin/pages`. The public `GET /pages/{id}` has no authorizer, because website visitors have no token.
+* **The other routes (Claude):** the `adminRoute` helper makes 1 Lambda with its routes, all behind the authorizer. Each Lambda gets only the grants it needs. A page and a collection entry share 1 Lambda. The publish Lambda gets 60 s, 512 MB, S3 read, and `bedrock:InvokeModel` on Nova Lite.
+* Verified on AWS: no token 401, a fake token 401, a real `cms` token 200 with the page list, and the public route 200 with no token. All 15 admin routes return 401 with no token. `cdk diff` caught a first try that changed the public route, before the deploy.
+* Lessons: an import with no braces gets the whole module, so `new` fails with "not constructable". Chrome blocks paste in the console until you type `allow pasting`.
+* Not tested yet: the admin routes on AWS with a real token from the UI, and publish on AWS with Bedrock. That comes with the deploy step.
+
 ## Next
 
-* Make the Clerk app, then add the JWT authorizer and deploy the admin routes. Peter writes it.
 * Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.
