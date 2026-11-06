@@ -410,14 +410,23 @@ function PageEditor({ target, onDeleted }: { target: Target; onDeleted: () => vo
     try {
       const { errors } = validator.validateFormData(fullData(), publishSchema(schemaRecord.schema) as RJSFSchema);
       if (errors.length > 0) {
-        const bad = [...new Set(errors.map((error) => (error.property ?? "").split(".")[1]).filter(Boolean))];
+        // The zone is the first part of the error path. A missing zone gives "whoItHelps",
+        // and an error inside a zone gives ".hero.heading", so drop a leading dot first.
+        const zoneNames = new Set(zones.map((z) => z.name));
+        const bad = [
+          ...new Set(errors.map((error) => (error.property ?? "").replace(/^\./, "").split(/[.[]/)[0])),
+        ].filter((name) => zoneNames.has(name));
         setZonesWithErrors(bad);
         const labels = zones.filter((z) => bad.includes(z.name)).map((z) => z.label);
         setNotice({
           kind: "error",
-          text: `Some sections need a fix before you publish: ${labels.join(", ")}. Your draft is not changed.`,
+          text:
+            labels.length > 0
+              ? `Some sections need a fix before you publish: ${labels.join(", ")}. Your draft is not changed.`
+              : "Some fields need a fix before you publish. Your draft is not changed.",
         });
-        if (zone && !bad.includes(zone)) {
+        // Only switch to a real zone. An undefined zone left the editor on "Loading…".
+        if (zone && bad.length > 0 && !bad.includes(zone)) {
           setZone(bad[0]);
         }
         setMarkErrors(true);
