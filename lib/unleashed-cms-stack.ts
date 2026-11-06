@@ -141,10 +141,13 @@ export class UnleashedCmsStack extends cdk.Stack {
     });
 
     // Rate Limiting
+    // 1 admin page load sends about 7 calls at the same time, and each call also sends a
+    // CORS preflight (OPTIONS). So 1 load is about 14 requests. A burst of 10 gave 429s.
+    // These limits still stop a runaway loop, and the $10 budget alert is the cost guard.
     const stage = api.defaultStage!.node.defaultChild as apigwv2.CfnStage;
     stage.defaultRouteSettings = {
-      throttlingBurstLimit: 10,
-      throttlingRateLimit: 2,
+      throttlingBurstLimit: 50,
+      throttlingRateLimit: 10,
     };
 
     api.addRoutes({
