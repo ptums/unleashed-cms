@@ -12,10 +12,23 @@ import { CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
+
+// The ACM certificate for cms.uptherapygroup.com. CloudFront needs it in us-east-1.
+// Only the certificate ID is here. The account ID comes from the deploy (this.account),
+// so it never goes in this public repo.
+const ADMIN_CERT_ID = "13df873a-f9ee-4812-bd9f-3a0f480fb213";
 
 export class UnleashedCmsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // Admin Cert
+    const adminCert = acm.Certificate.fromCertificateArn(
+      this,
+      "AdminCert",
+      `arn:aws:acm:us-east-1:${this.account}:certificate/${ADMIN_CERT_ID}`,
+    );
 
     // MEDIA: images the editor uploads. Key: uploads/<uuid>.<ext>
     const mediaBucket = new s3.Bucket(this, "MediaBucket", {
@@ -50,6 +63,8 @@ export class UnleashedCmsStack extends cdk.Stack {
         origin: origins.S3BucketOrigin.withOriginAccessControl(adminBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
+      certificate: adminCert,
+      domainNames: ["cms.uptherapygroup.com"],
     });
 
     new s3deploy.BucketDeployment(this, "AdminFiles", {
