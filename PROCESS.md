@@ -235,8 +235,22 @@ Only invited people can sign in, and API Gateway refuses each admin call that ha
 * **The other routes (Claude):** the `adminRoute` helper makes 1 Lambda with its routes, all behind the authorizer. Each Lambda gets only the grants it needs. A page and a collection entry share 1 Lambda. The publish Lambda gets 60 s, 512 MB, S3 read, and `bedrock:InvokeModel` on Nova Lite.
 * Verified on AWS: no token 401, a fake token 401, a real `cms` token 200 with the page list, and the public route 200 with no token. All 15 admin routes return 401 with no token. `cdk diff` caught a first try that changed the public route, before the deploy.
 * Lessons: an import with no braces gets the whole module, so `new` fails with "not constructable". Chrome blocks paste in the console until you type `allow pasting`.
-* Not tested yet: the admin routes on AWS with a real token from the UI, and publish on AWS with Bedrock. That comes with the deploy step.
+* Both tests on AWS passed in step 15.
+
+## Step 15: deploy at cms.uptherapygroup.com (2026-11-04 to 2026-11-05, the stack by Peter, the fixes by Claude)
+
+The admin UI and the API now run on AWS, at `https://cms.uptherapygroup.com`.
+
+* **CORS (Peter):** `corsPreflight` on the HTTP API allows `localhost:5173` and `https://cms.uptherapygroup.com`, the methods GET, POST, PUT, DELETE and OPTIONS, and the headers `Content-Type` and `Authorization`. The media bucket CORS also allows the cms origin. Verified: a preflight from the cms origin gets the headers, another origin gets none, and a 401 also has the CORS header.
+* **Hosting (Peter):** a private `adminBucket` and a CloudFront distribution with Origin Access Control, `index.html` as the root and HTTP sent to HTTPS. `BucketDeployment` copies `admin/dist` and clears the CloudFront cache. `npm run deploy` builds the admin UI first. `admin/.env.production` holds the API URL (not a secret, so it is committed). Verified: a direct S3 request gets 403.
+* **Certificate (Peter):** an ACM certificate in us-east-1 (CloudFront needs that region), checked by a DNS record at Namecheap. The stack imports it with `fromCertificateArn`. Only the certificate ID is in the code. The account ID comes from `this.account`, so it is not in this public repo.
+* **Domain (Peter):** `domainNames` and `certificate` on the distribution, and a Namecheap CNAME `cms` to the CloudFront name.
+* **Rate limit (Claude):** the stage limit was a burst of 10 and 2 per second. 1 admin page load sends about 14 requests (each call has a CORS preflight), so publish got 429. It is now a burst of 50 and 10 per second.
+* **Editor fix (Claude):** a failed publish check left the editor on "Loading…". A missing section gives the error path `whoItHelps` with no leading dot, so the code lost the section name and switched to no section. It now reads the first part of the path, and it switches only to a real section.
+* Verified on AWS: sign-in on the live domain loads the pages with a real token. A publish of the `twinkle` specialty made the SEO title, the description and the hero alt text in 2.4 s (the limit is 60 s).
+* **Namecheap lessons:** the Host field adds the domain itself, so enter `cms` and not `cms.uptherapygroup.com`. A record at Host `@` replaces the root domain, so never put a check record there. Saves sometimes do not go through, so look again after each save. To check a record, ask a public resolver (`dns.google/resolve`) and not the Mac. The Mac and Chrome keep a "not found" answer: run `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`, then clear `chrome://net-internals/#dns`.
+* Later: the Clerk Development instance runs on the live domain (a Production instance may come later). The alt text can guess a role ("likely a therapist"), so the prompt may need a rule about that.
 
 ## Next
 
-* Deploy the admin UI and API at `cms.uptherapygroup.com` (R15). Peter writes it.
+* The roadmap is done up to the deploy (R15).
