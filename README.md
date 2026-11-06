@@ -1,48 +1,63 @@
 # unleashed-cms
 
-A small, schema-based CMS for the Up Therapy Group website. It is written in TypeScript and runs serverless on AWS.
+A small headless CMS for the Up Therapy Group website. It is TypeScript, and it runs serverless on AWS.
 
-The website itself stays on Cloudflare Workers. The site's `/admin` route sends a 302 redirect to the CMS admin at `cms.uptherapygroup.com`.
+* **Admin:** https://cms.uptherapygroup.com (sign-in is by invite only)
+* **Website:** stays on Cloudflare Workers. It reads the published pages from this CMS's public API.
 
 ## How it works
 
-1. A developer writes a schema in `schemas/`. Each schema defines 1 page (a singleton) or 1 page type (a collection).
-2. Deploying the schema creates the page in the CMS.
-3. The editor opens the admin, picks a page from the list, edits its fields and clicks Publish.
-4. On publish, the CMS validates the page, drafts the SEO fields with a small AI model, saves the published JSON, then calls the site's revalidate webhook.
+1. A developer writes a schema for each page in `schema/`.
+2. `npm run sync` saves the schemas and makes an empty draft for each new page.
+3. The editor signs in, picks a page, edits it and clicks **Publish**.
+4. Publish checks the page, then the AI writes the SEO title, the meta description and the image alt text.
+5. The website gets the published page from `GET /pages/{id}`.
+
+The AI makes new SEO only on the first publish, or when more than 300 characters of text change. A failed AI step never stops a publish.
 
 ## Stack
 
 | Part | Service |
 |------|---------|
-| Infrastructure as code | AWS CDK (TypeScript) |
-| API | AWS Lambda (Node.js, TypeScript) |
-| Content | Amazon DynamoDB |
-| Images | Amazon S3 |
-| Admin UI host | S3 + CloudFront |
-| SEO drafts | Claude (a small Haiku-class model) |
-| Region | us-east-2 (the CloudFront certificate lives in us-east-1, as AWS requires) |
+| Infrastructure | AWS CDK (TypeScript), region us-east-2 |
+| API | API Gateway (HTTP API) + Lambda (Node.js) |
+| Content and schemas | DynamoDB |
+| Images | S3 (direct upload with signed URLs) |
+| Admin UI | React + Vite + RJSF, hosted on S3 + CloudFront |
+| Sign-in | Clerk (JWT checked by API Gateway) |
+| AI (SEO and alt text) | Amazon Bedrock, Nova Lite |
 
-## Layout
+## Folders
 
 ```
-bin/        CDK app entry point
-lib/        CDK stacks (the AWS resources)
-test/       Jest tests
-schemas/    Page schemas (planned)
+admin/     The admin UI (React)
+bin/       CDK app entry point
+lib/       The CDK stack (all AWS resources)
+lambda/    1 file per API route; lambda/ai/ has the AI steps
+schema/    Page schemas (Zod), 1 file per page or collection
+json/      JSON Schema sources for npm run json-to-zod
+scripts/   Local dev server, schema sync, JSON-to-Zod
+test/      Jest tests
 ```
+
+## Run it on your machine
+
+1. `npm install` and `npm --prefix admin install`
+2. Start the API: `TABLE_NAME=... SCHEMA_TABLE_NAME=... MEDIA_BUCKET_NAME=... AWS_REGION=us-east-2 npm run dev` (the names come from the `cdk deploy` outputs)
+3. Start the admin: `npm --prefix admin run dev`, then open http://localhost:5173
+
+The admin needs `VITE_CLERK_PUBLISHABLE_KEY` in `admin/.env.local`.
 
 ## Commands
 
-* `npm run build`: type-check the project
-* `npm run test`: run the Jest tests
-* `npx cdk synth`: print the CloudFormation template
-* `npx cdk diff`: compare the code with what is deployed
-* `npx cdk deploy`: deploy the stack
-
-## Status
-
-Work in progress. See [PROCESS.md](PROCESS.md) for each step so far.
+| Command | What it does |
+|---------|--------------|
+| `npm run deploy` | Build the admin UI and deploy everything |
+| `npm run sync` | Save the schemas to AWS |
+| `npm run json-to-zod` | Make Zod schemas from `json/` |
+| `npm run build` | Type-check |
+| `npm test` | Run the Jest tests |
+| `npx cdk diff` | Show what a deploy would change |
 
 ## Docs
 
