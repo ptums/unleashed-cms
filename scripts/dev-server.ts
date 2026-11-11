@@ -18,6 +18,7 @@ import { handler as listEntries } from "../lambda/list-entries";
 import { handler as createEntry } from "../lambda/create-entry";
 import { handler as createUpload } from "../lambda/create-upload";
 import { handler as viewUpload } from "../lambda/view-upload";
+import { handler as listPublished } from "../lambda/list-published";
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -30,6 +31,8 @@ type Route = {
 // The same routes that API Gateway will have. {name} is a path parameter.
 const routes: Route[] = [
   { method: "GET", path: "/pages/{id}", handler: getPage },
+  { method: "GET", path: "/collections/{type}/entries", handler: listPublished },
+  { method: "GET", path: "/collections/{type}/entries/{slug}", handler: getPage },
   { method: "GET", path: "/admin/pages", handler: listPages },
   { method: "GET", path: "/admin/pages/{id}", handler: getDraft },
   { method: "PUT", path: "/admin/pages/{id}", handler: putPage },

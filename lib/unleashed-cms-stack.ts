@@ -156,6 +156,30 @@ export class UnleashedCmsStack extends cdk.Stack {
       integration: new HttpLambdaIntegration("GetPageIntegration", getPageFn),
     });
 
+    // The public read of 1 published collection entry. Same Lambda as /pages/{id} (see content-key.ts).
+    api.addRoutes({
+      path: "/collections/{type}/entries/{slug}",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new HttpLambdaIntegration("GetEntryIntegration", getPageFn),
+    });
+
+    // The public list of published slugs in 1 collection (see list-published.ts).
+    const listPublishedFn = new NodejsFunction(this, "ListPublishedFn", {
+      entry: "lambda/list-published.ts",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      environment: {
+        TABLE_NAME: table.tableName,
+      },
+    });
+
+    table.grantReadData(listPublishedFn);
+
+    api.addRoutes({
+      path: "/collections/{type}/entries",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new HttpLambdaIntegration("ListPublishedIntegration", listPublishedFn),
+    });
+
     api.addRoutes({
       path: "/admin/pages",
       methods: [apigwv2.HttpMethod.GET],
