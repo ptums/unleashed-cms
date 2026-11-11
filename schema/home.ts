@@ -53,8 +53,12 @@ export const homeSchema = z.strictObject({
     "hidden": z.boolean().default(false),
     "eyebrow": z.string().min(1).max(40).default("Specialties"),
     "heading": z.string().min(1).max(80).default("What we treat"),
-    "items": z.array(referenceDef).min(1).max(9).meta({"description":"Tiles use each specialty's name and tile summary. A tile links only if its specialty page is published.","x-ui":{"widget":"referenceList","collection":"specialties","sortable":true}}),
-    "tileLinkLabel": z.string().min(1).max(40).default("Learn more"),
+    "items": z.array(z.strictObject({
+      "title": z.string().min(1).max(60).meta({"description":"Tile heading, for example Trauma & PTSD."}),
+      "body": z.string().min(1).max(200).meta({"description":"Sub text under the heading.","x-ui":{"widget":"textarea","rows":3}}),
+      "page": referenceDef.optional().meta({"description":"The page the Learn more link opens, for example collection pages and id our-approach, or collection specialties and id emdr."}),
+    })).min(1).max(9).meta({"description":"1 tile per item. The Learn more link shows only when the item has a page.","x-ui":{"sortable":true}}),
+    "tileLinkLabel": z.string().min(1).max(40).default("Learn More"),
   }).meta({"title":"Specialties grid","x-cms":{"zone":"specialties","order":1}}),
   "clinicians": z.strictObject({
     "hidden": z.boolean().default(false),

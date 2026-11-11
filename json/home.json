@@ -196,21 +196,46 @@
           "type": "array",
           "minItems": 1,
           "maxItems": 9,
-          "items": {
-            "$ref": "#/$defs/reference"
-          },
+          "description": "1 tile per item. The Learn more link shows only when the item has a page.",
           "x-ui": {
-            "widget": "referenceList",
-            "collection": "specialties",
             "sortable": true
           },
-          "description": "Tiles use each specialty's name and tile summary. A tile links only if its specialty page is published."
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "body"
+            ],
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60,
+                "description": "Tile heading, for example Trauma & PTSD."
+              },
+              "body": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Sub text under the heading.",
+                "x-ui": {
+                  "widget": "textarea",
+                  "rows": 3
+                }
+              },
+              "page": {
+                "$ref": "#/$defs/reference",
+                "description": "The page the Learn more link opens, for example collection pages and id our-approach, or collection specialties and id emdr."
+              }
+            }
+          }
         },
         "tileLinkLabel": {
           "type": "string",
           "minLength": 1,
           "maxLength": 40,
-          "default": "Learn more"
+          "default": "Learn More"
         }
       }
     },
