@@ -63,6 +63,17 @@ export class UnleashedCmsStack extends cdk.Stack {
         origin: origins.S3BucketOrigin.withOriginAccessControl(adminBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
+      // Public read of uploaded images for the site: https://cms.uptherapygroup.com/uploads/<uuid>.<ext>
+      // The bucket stays private. Only CloudFront reads it (origin access control), and only GET.
+      // Upload keys are random uuids, so a file is reachable only when content links to it.
+      additionalBehaviors: {
+        "/uploads/*": {
+          origin: origins.S3BucketOrigin.withOriginAccessControl(mediaBucket),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        },
+      },
       certificate: adminCert,
       domainNames: ["cms.uptherapygroup.com"],
     });
