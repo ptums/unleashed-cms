@@ -73,11 +73,11 @@
         "summary": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 280,
+          "maxLength": 600,
           "description": "Intro under the name. Also used on clinician cards.",
           "x-ui": {
             "widget": "textarea",
-            "rows": 3
+            "rows": 5
           }
         },
         "ages": {

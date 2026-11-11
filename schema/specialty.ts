@@ -10,11 +10,6 @@ const imageDef = z.strictObject({
   }).optional(),
 }).meta({"x-ui":{"widget":"image"}});
 
-const titledTextDef = z.strictObject({
-  "title": z.string().min(1).max(40),
-  "body": z.string().min(1).max(200).meta({"x-ui":{"widget":"textarea","rows":2}}),
-});
-
 const referenceDef = z.strictObject({
   "collection": z.enum(["pages","clinicians","specialties","mediaAppearances","blogPosts"]),
   "id": z.string(),
@@ -58,7 +53,10 @@ export const specialtySchema = z.strictObject({
     "hidden": z.boolean().default(false),
     "eyebrow": z.string().min(1).max(40).default("The process"),
     "heading": z.string().min(1).max(80),
-    "steps": z.array(titledTextDef).min(2).max(6).meta({"description":"Numbered automatically."}),
+    "steps": z.array(z.strictObject({
+      "title": z.string().min(1).max(40),
+      "body": z.string().min(1).max(600).meta({"x-ui":{"widget":"textarea","rows":5}}),
+    })).min(2).max(6).meta({"description":"Numbered automatically."}),
   }).meta({"title":"Process","x-cms":{"zone":"process","order":1}}),
   "clinicians": z.strictObject({
     "hidden": z.boolean().default(false),

@@ -44,7 +44,7 @@ export const clinicianProfileSchema = z.strictObject({
     "firstName": z.string().min(1).max(40).meta({"description":"Used in labels such as Book with {firstName}."}),
     "roleLine": z.string().min(1).max(80).meta({"description":"Small caps line above the name, e.g. Founder · Licensed Clinical Social Worker."}),
     "portrait": imageDef.meta({"description":"Portrait (3:4)."}),
-    "summary": z.string().min(1).max(280).meta({"description":"Intro under the name. Also used on clinician cards.","x-ui":{"widget":"textarea","rows":3}}),
+    "summary": z.string().min(1).max(600).meta({"description":"Intro under the name. Also used on clinician cards.","x-ui":{"widget":"textarea","rows":5}}),
     "ages": z.string().max(40).optional().meta({"description":"e.g. Adults 18+"}),
     "sessionsLine": z.string().max(100).optional().meta({"description":"Where and how they see clients, e.g. In person in [City] · Online in [State]."}),
     "languages": z.array(z.string().min(1).max(30)).min(1).max(6),

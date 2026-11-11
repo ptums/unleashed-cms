@@ -168,7 +168,28 @@
           "minItems": 2,
           "maxItems": 6,
           "items": {
-            "$ref": "#/$defs/titledText"
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "body"
+            ],
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "body": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 600,
+                "x-ui": {
+                  "widget": "textarea",
+                  "rows": 5
+                }
+              }
+            }
           },
           "description": "Numbered automatically."
         }
@@ -456,30 +477,6 @@
               "minimum": 0,
               "maximum": 1
             }
-          }
-        }
-      }
-    },
-    "titledText": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "title",
-        "body"
-      ],
-      "properties": {
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 40
-        },
-        "body": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200,
-          "x-ui": {
-            "widget": "textarea",
-            "rows": 2
           }
         }
       }
