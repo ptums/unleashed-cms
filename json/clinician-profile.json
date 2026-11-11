@@ -740,19 +740,10 @@
           "description": "Set for a range, e.g. 60–75. Leave empty for a fixed length."
         },
         "price": {
-          "oneOf": [
-            {
-              "type": "string",
-              "const": "free"
-            },
-            {
-              "type": "string",
-              "const": "contact"
-            },
-            {
-              "$ref": "#/$defs/money"
-            }
-          ]
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "description": "Shown as typed, for example Free or $255."
         },
         "bookableOnline": {
           "type": "boolean",
@@ -771,24 +762,6 @@
               "phone"
             ]
           }
-        }
-      }
-    },
-    "money": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "amountCents",
-        "currency"
-      ],
-      "properties": {
-        "amountCents": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "currency": {
-          "type": "string",
-          "const": "USD"
         }
       }
     }

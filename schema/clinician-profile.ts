@@ -15,21 +15,12 @@ const referenceDef = z.strictObject({
   "id": z.string(),
 });
 
-const moneyDef = z.strictObject({
-  "amountCents": z.int().min(0),
-  "currency": z.literal("USD"),
-});
-
 const sessionTypeDef = z.strictObject({
   "key": z.string().min(1).max(30).regex(new RegExp("^[a-z0-9_]+$")).meta({"description":"Stable id used by booking, e.g. consultation."}),
   "label": z.string().min(1).max(40),
   "minMinutes": z.int().min(5).max(240),
   "maxMinutes": z.int().min(5).max(240).nullable().default(null).meta({"description":"Set for a range, e.g. 60–75. Leave empty for a fixed length."}),
-  "price": z.union([
-    z.literal("free"),
-    z.literal("contact"),
-    moneyDef,
-  ]),
+  "price": z.string().min(1).max(30).meta({"description":"Shown as typed, for example Free or $255."}),
   "bookableOnline": z.boolean().default(false).meta({"description":"Offered in booking step 1."}),
   "modes": z.array(z.enum(["in_person","video","phone"])).min(1).max(3).optional(),
 });
