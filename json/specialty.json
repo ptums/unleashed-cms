@@ -60,11 +60,11 @@
         "intro": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 600,
-          "description": "What it is, in two sentences.",
+          "maxLength": 2000,
+          "description": "What it is. Leave a blank line between paragraphs.",
           "x-ui": {
             "widget": "textarea",
-            "rows": 5
+            "rows": 10
           }
         },
         "evidenceNote": {

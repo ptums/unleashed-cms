@@ -37,7 +37,7 @@ export const specialtySchema = z.strictObject({
   "hero": z.strictObject({
     "eyebrow": z.string().min(1).max(60).default("Specialties · How we help"),
     "heading": z.string().min(1).max(60).meta({"description":"The page's only H1."}),
-    "intro": z.string().min(1).max(600).meta({"description":"What it is, in two sentences.","x-ui":{"widget":"textarea","rows":5}}),
+    "intro": z.string().min(1).max(2000).meta({"description":"What it is. Leave a blank line between paragraphs.","x-ui":{"widget":"textarea","rows":10}}),
     "evidenceNote": z.string().max(160).optional().meta({"description":"Optional line on the research behind it."}),
     "tileSummary": z.string().min(1).max(110).meta({"description":"One line used on the Home specialties tile. Not shown on this page."}),
     "ctaLabel": z.string().min(1).max(40).default("See clinicians").meta({"description":"Scrolls to the clinicians zone."}),
