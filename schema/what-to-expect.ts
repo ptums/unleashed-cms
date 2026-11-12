@@ -51,7 +51,7 @@ export const whatToExpectSchema = z.strictObject({
     "hidden": z.boolean().default(false),
     "eyebrow": z.string().min(1).max(40).default("In person & online"),
     "heading": z.string().min(1).max(80),
-    "body": z.string().min(1).max(300).meta({"x-ui":{"widget":"textarea","rows":3}}),
+    "body": z.string().min(1).max(1000).meta({"x-ui":{"widget":"textarea","rows":6}}),
     "image": imageDef.meta({"description":"Landscape photo (4:3)."}),
     "link": linkDef.default({"label":"Fees & insurance","target":{"internal":{"collection":"pages","id":"fees-insurance"}}}),
   }).meta({"title":"In person & online","x-cms":{"zone":"formats","order":1}}),
