@@ -37,7 +37,7 @@ export const ourApproachSchema = z.strictObject({
   "hero": z.strictObject({
     "eyebrow": z.string().max(40).default("Our Mission").meta({"description":"Small caps line above the heading."}),
     "heading": z.string().min(1).max(80).default("Our approach").meta({"description":"The page's only H1."}),
-    "intro": z.string().max(280).meta({"description":"One or two sentences stating the mission.","x-ui":{"widget":"textarea","rows":3}}),
+    "intro": z.string().max(2000).meta({"description":"The mission. Leave a blank line between paragraphs.","x-ui":{"widget":"textarea","rows":10}}),
   }).meta({"title":"Hero","x-cms":{"zone":"hero","order":1}}),
   "featureImage": z.strictObject({
     "hidden": z.boolean().default(false),
