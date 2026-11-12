@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Share Your Experience",
-  "description": "Copy for the private feedback form for current and past clients. Submissions go to the practice and are never published automatically. Header, footer and crisis line come from site settings.",
+  "description": "Copy for the private review form for current and past clients. Submissions go to the practice and are never published automatically. Header, footer and crisis line come from site settings.",
   "type": "object",
   "additionalProperties": false,
   "x-cms": {
@@ -24,7 +24,7 @@
   "properties": {
     "form": {
       "type": "object",
-      "title": "Feedback form",
+      "title": "Review form",
       "additionalProperties": false,
       "x-cms": {
         "zone": "form",
@@ -184,7 +184,7 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 200,
-              "default": "You may share my feedback on your website, using my first name and last initial.",
+              "default": "You may share my review on your website, using my first name and last initial.",
               "description": "Optional checkbox. When ticked, the submission is flagged as publishable; staff still decide."
             }
           }
@@ -223,7 +223,7 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 40,
-          "default": "Send feedback"
+          "default": "Send review"
         },
         "cancelLabel": {
           "type": "string",
@@ -308,7 +308,7 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 200,
-          "default": "Your feedback has been sent to our team. We read every response."
+          "default": "Your review has been sent to our team. We read every response."
         },
         "primaryLink": {
           "$ref": "#/$defs/link",

@@ -52,16 +52,16 @@ export const shareExperienceSchema = z.strictObject({
         "no": z.string().min(1).max(20).default("No"),
       }),
       "anythingElse": z.string().min(1).max(80).default("Anything else you would like to add?"),
-      "publishConsent": z.string().min(1).max(200).default("You may share my feedback on your website, using my first name and last initial.").meta({"description":"Optional checkbox. When ticked, the submission is flagged as publishable; staff still decide."}),
+      "publishConsent": z.string().min(1).max(200).default("You may share my review on your website, using my first name and last initial.").meta({"description":"Optional checkbox. When ticked, the submission is flagged as publishable; staff still decide."}),
     }),
     "errors": z.strictObject({
       "summary": z.string().min(1).max(80).default("Please fix {count} to continue."),
       "name": z.string().min(1).max(80).default("Error: enter your full name."),
       "email": z.string().min(1).max(80).default("Error: enter an email address like name@example.com."),
     }).meta({"description":"Shown as text under each field, starting with Error:."}),
-    "submitLabel": z.string().min(1).max(40).default("Send feedback"),
+    "submitLabel": z.string().min(1).max(40).default("Send review"),
     "cancelLabel": z.string().min(1).max(20).default("Cancel").meta({"description":"Returns to the reviews page."}),
-  }).meta({"title":"Feedback form","x-cms":{"zone":"form","order":1}}),
+  }).meta({"title":"Review form","x-cms":{"zone":"form","order":1}}),
   "notePanel": z.strictObject({
     "hidden": z.boolean().default(false),
     "heading": z.string().min(1).max(60).default("Before you write"),
@@ -71,7 +71,7 @@ export const shareExperienceSchema = z.strictObject({
   "thankYou": z.strictObject({
     "hidden": z.boolean().default(false),
     "heading": z.string().min(1).max(60).default("Thank you for sharing.").meta({"description":"Becomes the H1 after a successful submit."}),
-    "body": z.string().min(1).max(200).default("Your feedback has been sent to our team. We read every response."),
+    "body": z.string().min(1).max(200).default("Your review has been sent to our team. We read every response."),
     "primaryLink": linkDef.default({"label":"Back to reviews","target":{"internal":{"collection":"pages","id":"reviews"}}}),
     "secondaryLink": linkDef.default({"label":"Return to home","target":{"internal":{"collection":"pages","id":"home"}}}),
   }).meta({"title":"Thank-you state","description":"Required. Keep hidden false.","x-cms":{"zone":"thankYou","order":1}}),
@@ -81,7 +81,7 @@ export const shareExperienceSchema = z.strictObject({
     "ogImage": imageDef.optional(),
     "noindex": z.boolean().default(false),
   }).meta({"title":"SEO","x-cms":{"zone":"meta","order":1}}),
-}).meta({"title":"Share Your Experience","description":"Copy for the private feedback form for current and past clients. Submissions go to the practice and are never published automatically. Header, footer and crisis line come from site settings.","x-cms":{"kind":"singleton","route":"/reviews/share","template":"ShareExperiencePage","zones":["form","notePanel","thankYou","meta"]}});
+}).meta({"title":"Share Your Experience","description":"Copy for the private review form for current and past clients. Submissions go to the practice and are never published automatically. Header, footer and crisis line come from site settings.","x-cms":{"kind":"singleton","route":"/reviews/share","template":"ShareExperiencePage","zones":["form","notePanel","thankYou","meta"]}});
 
 export type ShareExperienceData = z.infer<typeof shareExperienceSchema>;
 
