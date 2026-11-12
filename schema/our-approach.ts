@@ -59,7 +59,7 @@ export const ourApproachSchema = z.strictObject({
     "hidden": z.boolean().default(false),
     "eyebrow": z.string().max(40).default("A note from our founder"),
     "portrait": imageDef.meta({"description":"Portrait (4:5)."}),
-    "quote": z.string().min(1).max(300).meta({"description":"Short note in the founder's voice. Quotation marks are added by the template.","x-ui":{"widget":"textarea","rows":4}}),
+    "quote": z.string().min(1).max(1000).meta({"description":"Note in the founder's voice. Quotation marks are added by the template.","x-ui":{"widget":"textarea","rows":6}}),
     "founder": referenceDef.meta({"description":"The founder's clinician entry."}),
     "authorName": z.string().max(60).meta({"description":"Name with credentials, as shown under the quote."}),
     "authorRole": z.string().max(40).default("Founder"),

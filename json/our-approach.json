@@ -87,7 +87,7 @@
         "hidden": { "type": "boolean", "default": false },
         "eyebrow": { "type": "string", "maxLength": 40, "default": "A note from our founder" },
         "portrait": { "$ref": "#/$defs/image", "description": "Portrait (4:5)." },
-        "quote": { "type": "string", "minLength": 1, "maxLength": 300, "description": "Short note in the founder's voice. Quotation marks are added by the template.", "x-ui": { "widget": "textarea", "rows": 4 } },
+        "quote": { "type": "string", "minLength": 1, "maxLength": 1000, "description": "Note in the founder's voice. Quotation marks are added by the template.", "x-ui": { "widget": "textarea", "rows": 6 } },
         "founder": { "$ref": "#/$defs/reference", "description": "The founder's clinician entry." },
         "authorName": { "type": "string", "maxLength": 60, "description": "Name with credentials, as shown under the quote." },
         "authorRole": { "type": "string", "maxLength": 40, "default": "Founder" },
