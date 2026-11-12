@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Client Reviews",
+  "description": "Content for the Client Reviews page. Layout is fixed by the template; each top-level property is one zone. Reviews live in reviewList.items, in display order. Header, footer and crisis line come from site settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "route": "/reviews",
+    "template": "ReviewsPage",
+    "zones": [
+      "hero",
+      "featureImage",
+      "reviewList",
+      "closingCta",
+      "meta"
+    ]
+  },
+  "required": [
+    "hero",
+    "featureImage",
+    "reviewList",
+    "closingCta",
+    "seo"
+  ],
+  "properties": {
+    "hero": {
+      "type": "object",
+      "title": "Hero",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "hero",
+        "order": 1
+      },
+      "required": [
+        "eyebrow",
+        "heading",
+        "intro"
+      ],
+      "properties": {
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "default": "Experience"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "Client reviews",
+          "description": "The page's only H1."
+        },
+        "intro": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 2
+          },
+          "description": "Leave a blank line between paragraphs."
+        }
+      }
+    },
+    "featureImage": {
+      "type": "object",
+      "title": "Feature image",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "featureImage",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "image"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "image": {
+          "$ref": "#/$defs/image",
+          "description": "Wide photo (21:9). Calm interior, natural light."
+        }
+      },
+      "description": "A hairline divider follows this zone, as on Our Approach."
+    },
+    "reviewList": {
+      "type": "object",
+      "title": "Reviews",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "reviewList",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading",
+        "summary",
+        "collapseAfterChars",
+        "expandLabel",
+        "collapseLabel",
+        "items"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Reviews"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "What clients say"
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 160,
+          "default": "{count} reviews from clients of our founder, Jess Rebelo, LCSW.",
+          "description": "Shown beside the list. {count} is the number of visible reviews."
+        },
+        "asideLink": {
+          "$ref": "#/$defs/link",
+          "description": "Button under the summary.",
+          "default": {
+            "label": "Meet Jess",
+            "target": {
+              "internal": {
+                "collection": "clinicians",
+                "id": "jessica-rebelo"
+              }
+            }
+          }
+        },
+        "collapseAfterChars": {
+          "type": "integer",
+          "minimum": 200,
+          "maximum": 1200,
+          "default": 360,
+          "description": "Longer reviews show five lines and a Read full review button."
+        },
+        "expandLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Read full review"
+        },
+        "collapseLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Show less"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/review"
+          },
+          "description": "Shown in this order."
+        }
+      }
+    },
+    "closingCta": {
+      "type": "object",
+      "title": "Closing call to action",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "closingCta",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "heading",
+        "cta"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "cta": {
+          "$ref": "#/$defs/link",
+          "description": "Must point to a clinician profile or the clinicians list. Booking only starts on a profile.",
+          "default": {
+            "label": "Book a Consultation",
+            "target": {
+              "internal": {
+                "collection": "clinicians",
+                "id": "jessica-rebelo"
+              }
+            }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "title": "SEO",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "meta",
+        "order": 1
+      },
+      "required": [
+        "title",
+        "description",
+        "noindex"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "ogImage": {
+          "$ref": "#/$defs/image"
+        },
+        "noindex": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "id"
+      ],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "pages",
+            "clinicians",
+            "specialties",
+            "mediaAppearances",
+            "blogPosts"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "internal"
+              ],
+              "properties": {
+                "internal": {
+                  "$ref": "#/$defs/reference"
+                },
+                "anchor": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assetId",
+        "alt"
+      ],
+      "x-ui": {
+        "widget": "image"
+      },
+      "properties": {
+        "assetId": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Required for WCAG."
+        },
+        "focalPoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "displayName",
+        "text",
+        "consentOnFile",
+        "hidden"
+      ],
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40,
+          "description": "First name and last initial only, e.g. Kevin D. Never a full last name."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 4000,
+          "description": "The client's words, verbatim. Fix nothing except stray whitespace.",
+          "x-ui": {
+            "widget": "textarea",
+            "rows": 6
+          }
+        },
+        "consentOnFile": {
+          "type": "boolean",
+          "const": true,
+          "description": "Must be true: written permission to publish this review is on file."
+        },
+        "receivedDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "default": null,
+          "description": "When the review was received. Internal; not shown."
+        },
+        "hidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide this one review without deleting it."
+        }
+      }
+    }
+  }
+}
