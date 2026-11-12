@@ -17,6 +17,7 @@ import * as sns from "aws-cdk-lib/aws-sns";
 import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { DynamoEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import * as budgets from "aws-cdk-lib/aws-budgets";
 
 // The ACM certificate for cms.uptherapygroup.com. CloudFront needs it in us-east-1.
 // Only the certificate ID is here. The account ID comes from the deploy (this.account),
@@ -393,6 +394,35 @@ export class UnleashedCmsStack extends cdk.Stack {
         resources: [submissionsTable.tableArn],
       }),
     );
+
+    // Cost tag for the forms pieces, so the forms budget below counts only them.
+    for (const part of [submissionsTable, submissionAlerts, notifyFn, siteFormsUser]) {
+      cdk.Tags.of(part).add("component", "form-submissions");
+    }
+
+    // $5 a month for the forms pieces, with an email at 80% of actual spend (Peter, 2026-11-12).
+    // The account-wide budget (uptherapy-cms-monthly, $10) stays as it is.
+    // The "component" tag must be active in Billing → Cost allocation tags, or this budget reads $0.
+    new budgets.CfnBudget(this, "FormSubmissionsBudget", {
+      budget: {
+        budgetName: "uptherapy-forms-monthly",
+        budgetType: "COST",
+        timeUnit: "MONTHLY",
+        budgetLimit: { amount: 5, unit: "USD" },
+        costFilters: { TagKeyValue: ["user:component$form-submissions"] },
+      },
+      notificationsWithSubscribers: [
+        {
+          notification: {
+            notificationType: "ACTUAL",
+            comparisonOperator: "GREATER_THAN",
+            threshold: 80,
+            thresholdType: "PERCENTAGE",
+          },
+          subscribers: [{ subscriptionType: "EMAIL", address: "tumultywebservices@gmail.com" }],
+        },
+      ],
+    });
 
     new cdk.CfnOutput(this, "FormSubmissionsTableName", { value: submissionsTable.tableName });
     new cdk.CfnOutput(this, "SiteFormsUserName", { value: siteFormsUser.userName });
