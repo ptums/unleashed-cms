@@ -52,10 +52,10 @@
         },
         "intro": {
           "type": "string",
-          "maxLength": 240,
+          "maxLength": 1000,
           "x-ui": {
             "widget": "textarea",
-            "rows": 2
+            "rows": 6
           }
         }
       }
@@ -189,7 +189,7 @@
         },
         "body": {
           "type": "string",
-          "maxLength": 140
+          "maxLength": 1000
         },
         "cta": {
           "$ref": "#/$defs/link",

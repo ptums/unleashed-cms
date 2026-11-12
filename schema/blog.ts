@@ -32,7 +32,7 @@ export const blogSchema = z.strictObject({
   "hero": z.strictObject({
     "eyebrow": z.string().min(1).max(40).default("Blog"),
     "heading": z.string().min(1).max(80).meta({"description":"The page's only H1."}),
-    "intro": z.string().max(240).meta({"x-ui":{"widget":"textarea","rows":2}}),
+    "intro": z.string().max(1000).meta({"x-ui":{"widget":"textarea","rows":6}}),
   }).meta({"title":"Hero","x-cms":{"zone":"hero","order":1}}),
   "featuredPost": z.strictObject({
     "hidden": z.boolean().default(false),
@@ -52,7 +52,7 @@ export const blogSchema = z.strictObject({
   "closingCta": z.strictObject({
     "hidden": z.boolean().default(false),
     "heading": z.string().min(1).max(80),
-    "body": z.string().max(140).optional(),
+    "body": z.string().max(1000).optional(),
     "cta": linkDef.default({"label":"Meet our clinicians","target":{"internal":{"collection":"pages","id":"clinicians"}}}),
   }).meta({"title":"Closing call to action","x-cms":{"zone":"closingCta","order":1}}),
   "seo": z.strictObject({
