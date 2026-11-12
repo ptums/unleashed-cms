@@ -497,7 +497,7 @@
         "answer": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 600,
+          "maxLength": 2000,
           "contentMediaType": "text/markdown",
           "x-ui": {
             "widget": "markdown",

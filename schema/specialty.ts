@@ -17,7 +17,7 @@ const referenceDef = z.strictObject({
 
 const faqItemDef = z.strictObject({
   "question": z.string().min(1).max(120),
-  "answer": z.string().min(1).max(600).meta({"contentMediaType":"text/markdown","x-ui":{"widget":"markdown","toolbar":["bold","italic","link","bulletList"]}}),
+  "answer": z.string().min(1).max(2000).meta({"contentMediaType":"text/markdown","x-ui":{"widget":"markdown","toolbar":["bold","italic","link","bulletList"]}}),
 });
 
 const linkDef = z.strictObject({
