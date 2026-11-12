@@ -211,6 +211,42 @@
           "default": "consultation",
           "description": "Must match a key in the fees zone. Usually the free consultation.",
           "pattern": "^[a-z0-9_]+$"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "America/New_York",
+          "description": "IANA time zone the clinician's hours are set in."
+        },
+        "weeklyHours": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 21,
+          "items": {
+            "$ref": "#/$defs/hoursWindow"
+          },
+          "description": "Bookable windows for free consultations, in the time zone above. Busy times on the calendar are removed from these. Leave empty to show no open times."
+        },
+        "bufferMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60,
+          "default": 15,
+          "description": "Gap kept free before and after each booked consultation."
+        },
+        "minNoticeHours": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 168,
+          "default": 24,
+          "description": "Earliest bookable time, counted from now."
+        },
+        "maxDaysAhead": {
+          "type": "integer",
+          "minimum": 7,
+          "maximum": 90,
+          "default": 28
         }
       },
       "description": "Booking starts only here. Keep hidden false unless the clinician is not taking clients at all."
@@ -762,6 +798,43 @@
               "phone"
             ]
           }
+        }
+      }
+    },
+    "hoursWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "day",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "day": {
+          "type": "string",
+          "enum": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ]
+        },
+        "start": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 5,
+          "description": "24-hour HH:MM.",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        },
+        "end": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 5,
+          "description": "24-hour HH:MM, after start.",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
         }
       }
     }
