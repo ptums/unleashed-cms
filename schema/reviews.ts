@@ -57,6 +57,10 @@ export const reviewsSchema = z.strictObject({
     "collapseLabel": z.string().min(1).max(40).default("Show less"),
     "items": z.array(reviewDef).min(1).max(200).meta({"description":"Shown in this order."}),
   }).meta({"title":"Reviews","x-cms":{"zone":"reviewList","order":1}}),
+  "shareButton": z.strictObject({
+    "hidden": z.boolean().default(false),
+    "link": linkDef.default({"label":"Share your experience","target":{"internal":{"collection":"pages","id":"share-experience"}}}).meta({"description":"Floating button, upper right, stays visible while scrolling. Same style as Book with {firstName} on profiles."}),
+  }).optional().meta({"title":"Share your experience button","x-cms":{"zone":"shareButton","order":1}}),
   "closingCta": z.strictObject({
     "hidden": z.boolean().default(false),
     "heading": z.string().min(1).max(80),
@@ -69,7 +73,7 @@ export const reviewsSchema = z.strictObject({
     "ogImage": imageDef.optional(),
     "noindex": z.boolean().default(false),
   }).meta({"title":"SEO","x-cms":{"zone":"meta","order":1}}),
-}).meta({"title":"Client Reviews","description":"Content for the Client Reviews page. Layout is fixed by the template; each top-level property is one zone. Reviews live in reviewList.items, in display order. Header, footer and crisis line come from site settings.","x-cms":{"kind":"singleton","route":"/reviews","template":"ReviewsPage","zones":["hero","featureImage","reviewList","closingCta","meta"]}});
+}).meta({"title":"Client Reviews","description":"Content for the Client Reviews page. Layout is fixed by the template; each top-level property is one zone. Reviews live in reviewList.items, in display order. Header, footer and crisis line come from site settings.","x-cms":{"kind":"singleton","route":"/reviews","template":"ReviewsPage","zones":["hero","featureImage","reviewList","shareButton","closingCta","meta"]}});
 
 export type ReviewsData = z.infer<typeof reviewsSchema>;
 

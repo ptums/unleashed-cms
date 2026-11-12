@@ -12,6 +12,7 @@
       "hero",
       "featureImage",
       "reviewList",
+      "shareButton",
       "closingCta",
       "meta"
     ]
@@ -168,6 +169,38 @@
             "$ref": "#/$defs/review"
           },
           "description": "Shown in this order."
+        }
+      }
+    },
+    "shareButton": {
+      "type": "object",
+      "title": "Share your experience button",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "shareButton",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "link"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "link": {
+          "$ref": "#/$defs/link",
+          "description": "Floating button, upper right, stays visible while scrolling. Same style as Book with {firstName} on profiles.",
+          "default": {
+            "label": "Share your experience",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "share-experience"
+              }
+            }
+          }
         }
       }
     },
