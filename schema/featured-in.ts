@@ -32,7 +32,7 @@ export const featuredInSchema = z.strictObject({
   "hero": z.strictObject({
     "eyebrow": z.string().min(1).max(60).default("Our Mission · Featured In"),
     "heading": z.string().min(1).max(80).default("Podcasts & press").meta({"description":"The page's only H1."}),
-    "intro": z.string().max(240).meta({"x-ui":{"widget":"textarea","rows":2}}),
+    "intro": z.string().max(1000).meta({"x-ui":{"widget":"textarea","rows":6}}),
   }).meta({"title":"Hero","description":"The outlet names under the intro are taken from the appearances zone.","x-cms":{"zone":"hero","order":1}}),
   "featuredEpisode": z.strictObject({
     "hidden": z.boolean().default(false),
