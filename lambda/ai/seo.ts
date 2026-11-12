@@ -6,6 +6,7 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { z } from "zod";
 import { reply, siteTitle } from "../../utils";
+import { fitToLimit } from "./fit";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 
 const client = new BedrockRuntimeClient();
@@ -58,7 +59,7 @@ Rules:
 4. Use only facts from the page. Use a warm, calm tone. Do not promise results.
 Always answer by calling the save_seo tool.`;
 
-// The answer could not be used: the model did not call the tool, or it broke the limits twice.
+// The answer could not be used: the model did not call the tool, or its answer had no text.
 export class SeoAnswerError extends Error {}
 
 // Makes the SEO title and description for 1 page. Publish calls this, and so does the handler below.
@@ -76,6 +77,7 @@ export async function generateSeo(content: Record<string, unknown>) {
   ];
 
   // 2 tries: the first answer, and 1 retry if the answer breaks a limit.
+  let lastInput: unknown;
   for (let attempt = 1; attempt <= 2; attempt++) {
     const response = await client.send(
       new ConverseCommand({
@@ -103,6 +105,7 @@ export async function generateSeo(content: Record<string, unknown>) {
       throw new SeoAnswerError("The AI service did not return SEO data");
     }
 
+    lastInput = block.toolUse.input;
     // safeParse does not throw. It says if the answer passed, and why not.
     const checked = seoResult.safeParse(block.toolUse.input);
     if (checked.success) {
@@ -139,9 +142,18 @@ export async function generateSeo(content: Record<string, unknown>) {
     });
   }
 
-  throw new SeoAnswerError(
-    "The AI service returned SEO data that breaks the limits",
-  );
+  // Both answers were too long. Cut the last one to fit, so the page still gets SEO.
+  const last = lastInput as { title?: unknown; description?: unknown } | undefined;
+  const trimmed = seoResult.safeParse({
+    title: typeof last?.title === "string" ? fitToLimit(last.title, SEO_LIMITS.title) : "",
+    description:
+      typeof last?.description === "string" ? fitToLimit(last.description, SEO_LIMITS.description) : "",
+  });
+  if (trimmed.success) {
+    console.warn("SEO answer cut to fit the limits", trimmed.data);
+    return trimmed.data;
+  }
+  throw new SeoAnswerError("The AI service returned SEO data that breaks the limits");
 }
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
