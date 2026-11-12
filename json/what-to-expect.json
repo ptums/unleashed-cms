@@ -168,7 +168,7 @@
         "heading": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 80
+          "maxLength": 1000
         },
         "body": {
           "type": "string",

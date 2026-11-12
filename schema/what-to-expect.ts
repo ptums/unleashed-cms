@@ -57,7 +57,7 @@ export const whatToExpectSchema = z.strictObject({
   }).meta({"title":"In person & online","x-cms":{"zone":"formats","order":1}}),
   "closingCta": z.strictObject({
     "hidden": z.boolean().default(false),
-    "heading": z.string().min(1).max(80),
+    "heading": z.string().min(1).max(1000),
     "body": z.string().max(140).optional(),
     "cta": linkDef.default({"label":"Meet our clinicians","target":{"internal":{"collection":"pages","id":"clinicians"}}}),
   }).meta({"title":"Closing call to action","x-cms":{"zone":"closingCta","order":1}}),
