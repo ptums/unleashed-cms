@@ -13,6 +13,10 @@ import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
+import * as logs from "aws-cdk-lib/aws-logs";
+import { DynamoEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 // The ACM certificate for cms.uptherapygroup.com. CloudFront needs it in us-east-1.
 // Only the certificate ID is here. The account ID comes from the deploy (this.account),
@@ -329,6 +333,69 @@ export class UnleashedCmsStack extends cdk.Stack {
       ["/admin/uploads/{file}"],
     );
     mediaBucket.grantRead(viewUploadFn);
+
+    // ---- Website form submissions: the debug log (ported from jessrebelo.com) ----
+    // The site (Cloudflare Worker, /api/submit) writes 1 item per submission: metadata only,
+    // never names, contact details or text. Each new item sends an anonymous alert by email.
+
+    // Fixed capacity is the cost cap: extra traffic is throttled, not billed (no autoscaling).
+    // The classic Table construct, because TableV2 requires autoscaling for write capacity.
+    const submissionsTable = new dynamodb.Table(this, "FormSubmissionsTable", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: 5,
+      writeCapacity: 5,
+      timeToLiveAttribute: "expiresAt", // 12 months, set by the site
+      stream: dynamodb.StreamViewType.NEW_IMAGE,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    const submissionAlerts = new sns.Topic(this, "FormSubmissionAlerts", {
+      displayName: "Website form submissions",
+    });
+    // AWS emails a confirmation link first. The alerts start after it is clicked.
+    submissionAlerts.addSubscription(new subscriptions.EmailSubscription("tumultywebservices@gmail.com"));
+
+    const notifyFn = new NodejsFunction(this, "NotifyNewSubmissionFn", {
+      entry: "lambda/notify-new-submission.ts",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      environment: { TOPIC_ARN: submissionAlerts.topicArn },
+      logGroup: new logs.LogGroup(this, "NotifyNewSubmissionLogs", {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      }),
+    });
+    submissionAlerts.grantPublish(notifyFn);
+    notifyFn.addEventSource(
+      new DynamoEventSource(submissionsTable, {
+        startingPosition: lambda.StartingPosition.LATEST,
+        batchSize: 10,
+        retryAttempts: 2,
+        maxRecordAge: cdk.Duration.hours(1),
+        bisectBatchOnError: true,
+        // Only new submissions: no updates (the sent/failed mark) and no deletes (TTL).
+        filters: [
+          lambda.FilterCriteria.filter({
+            eventName: lambda.FilterRule.isEqual("INSERT"),
+            dynamodb: { Keys: { pk: { S: lambda.FilterRule.beginsWith("sub#") } } },
+          }),
+        ],
+      }),
+    );
+
+    // The Worker's identity: write-only to this 1 table, no console access.
+    // Peter makes its access key in the console and stores it as Worker secrets (never in CDK).
+    const siteFormsUser = new iam.User(this, "SiteFormsUser");
+    siteFormsUser.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
+        resources: [submissionsTable.tableArn],
+      }),
+    );
+
+    new cdk.CfnOutput(this, "FormSubmissionsTableName", { value: submissionsTable.tableName });
+    new cdk.CfnOutput(this, "SiteFormsUserName", { value: siteFormsUser.userName });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new cdk.CfnOutput(this, "MediaBucketName", {
