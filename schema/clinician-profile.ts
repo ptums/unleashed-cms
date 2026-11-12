@@ -15,6 +15,12 @@ const referenceDef = z.strictObject({
   "id": z.string(),
 });
 
+const hoursWindowDef = z.strictObject({
+  "day": z.enum(["mon","tue","wed","thu","fri","sat","sun"]),
+  "start": z.string().min(5).max(5).regex(new RegExp("^([01][0-9]|2[0-3]):[0-5][0-9]$")).meta({"description":"24-hour HH:MM."}),
+  "end": z.string().min(5).max(5).regex(new RegExp("^([01][0-9]|2[0-3]):[0-5][0-9]$")).meta({"description":"24-hour HH:MM, after start."}),
+});
+
 const sessionTypeDef = z.strictObject({
   "key": z.string().min(1).max(30).regex(new RegExp("^[a-z0-9_]+$")).meta({"description":"Stable id used by booking, e.g. consultation."}),
   "label": z.string().min(1).max(40),
@@ -63,6 +69,11 @@ export const clinicianProfileSchema = z.strictObject({
     "provider": z.enum(["simplepractice","jane","acuity","calendly","custom"]),
     "externalCalendarId": z.string().min(1).max(120).meta({"description":"Internal. Never rendered."}),
     "defaultSessionTypeKey": z.string().min(1).max(30).regex(new RegExp("^[a-z0-9_]+$")).default("consultation").meta({"description":"Must match a key in the fees zone. Usually the free consultation."}),
+    "timezone": z.string().min(1).max(40).default("America/New_York").meta({"description":"IANA time zone the clinician's hours are set in."}),
+    "weeklyHours": z.array(hoursWindowDef).min(1).max(21).optional().meta({"description":"Bookable windows for free consultations, in the time zone above. Busy times on the calendar are removed from these. Leave empty to show no open times."}),
+    "bufferMinutes": z.int().min(0).max(60).default(15).meta({"description":"Gap kept free before and after each booked consultation."}),
+    "minNoticeHours": z.int().min(0).max(168).default(24).meta({"description":"Earliest bookable time, counted from now."}),
+    "maxDaysAhead": z.int().min(7).max(90).default(28),
   }).meta({"title":"Booking card","description":"Booking starts only here. Keep hidden false unless the clinician is not taking clients at all.","x-cms":{"zone":"booking","order":1}}),
   "approach": z.strictObject({
     "hidden": z.boolean().default(false),
