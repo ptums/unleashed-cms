@@ -83,6 +83,23 @@ export const homeSchema = z.strictObject({
     "steps": z.array(titledTextDef).min(2).max(5).meta({"description":"Numbered automatically (01, 02, …)."}),
     "moreLink": linkDef.default({"label":"What to expect, in detail","target":{"internal":{"collection":"pages","id":"what-to-expect"}}}),
   }).meta({"title":"How it works","x-cms":{"zone":"howItWorks","order":1}}),
+  "reviewsBand": z.strictObject({
+    "hidden": z.boolean().default(false),
+    "eyebrow": z.string().min(1).max(40).default("Client reviews"),
+    "heading": z.string().min(1).max(80).default("In their own words"),
+    "allReviewsLink": linkDef.default({"label":"Read all reviews","target":{"internal":{"collection":"pages","id":"reviews"}}}),
+    "google": z.strictObject({
+      "rating": z.number().min(1).max(5).optional().meta({"description":"The star rating on Google, for example 5 or 4.9."}),
+      "reviewCount": z.int().min(1).optional().meta({"description":"The number of reviews on Google."}),
+      "profileUrl": z.url().optional().meta({"description":"The link to all of Jess's reviews on Google."}),
+      "linkLabel": z.string().min(1).max(40).default("Read all reviews on Google"),
+      "items": z.array(z.strictObject({
+        "authorName": z.string().min(1).max(60).meta({"description":"As shown on Google, for example \"Kim C.\""}),
+        "text": z.string().min(1).max(240).meta({"x-ui":{"widget":"textarea","rows":3}}),
+        "stars": z.int().min(1).max(5).default(5),
+      })).max(8).meta({"description":"Copy each blurb exactly as written on Google. Keep it short; long text is cut."}),
+    }).optional().meta({"title":"Google reviews","description":"Short blurbs from Jess's Google reviews, shown under the carousel. The row stays hidden until the profile link and at least 1 blurb are filled in."}),
+  }).optional().meta({"title":"Client reviews","description":"The reviews band near the bottom of Home. The carousel shows snippets from the Reviews page; the Google row shows the blurbs entered below.","x-cms":{"zone":"reviewsBand","order":1}}),
   "approachBand": z.strictObject({
     "hidden": z.boolean().default(false),
     "eyebrow": z.string().min(1).max(40).default("Our approach"),
@@ -95,7 +112,7 @@ export const homeSchema = z.strictObject({
     "ogImage": imageDef.optional(),
     "noindex": z.boolean().default(false),
   }).meta({"title":"SEO","x-cms":{"zone":"meta","order":1}}),
-}).meta({"title":"Home","description":"Content for the Home page. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.","x-cms":{"kind":"singleton","route":"/","template":"HomePage","zones":["hero","featuredIn","specialties","clinicians","howItWorks","approachBand","meta"]}});
+}).meta({"title":"Home","description":"Content for the Home page. Layout is fixed by the template; each top-level property is one zone. Header, footer and crisis line come from site settings.","x-cms":{"kind":"singleton","route":"/","template":"HomePage","zones":["hero","featuredIn","specialties","clinicians","howItWorks","reviewsBand","approachBand","meta"]}});
 
 export type HomeData = z.infer<typeof homeSchema>;
 
