@@ -14,6 +14,7 @@
       "specialties",
       "clinicians",
       "howItWorks",
+      "reviewsBand",
       "approachBand",
       "meta"
     ]
@@ -411,6 +412,121 @@
               "internal": {
                 "collection": "pages",
                 "id": "what-to-expect"
+              }
+            }
+          }
+        }
+      }
+    },
+    "reviewsBand": {
+      "type": "object",
+      "title": "Client reviews",
+      "description": "The reviews band near the bottom of Home. The carousel shows snippets from the Reviews page; the Google row shows the blurbs entered below.",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "reviewsBand",
+        "order": 1
+      },
+      "required": [
+        "hidden",
+        "eyebrow",
+        "heading"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "eyebrow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "Client reviews"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "default": "In their own words"
+        },
+        "allReviewsLink": {
+          "$ref": "#/$defs/link",
+          "default": {
+            "label": "Read all reviews",
+            "target": {
+              "internal": {
+                "collection": "pages",
+                "id": "reviews"
+              }
+            }
+          }
+        },
+        "google": {
+          "type": "object",
+          "title": "Google reviews",
+          "description": "Short blurbs from Jess's Google reviews, shown under the carousel. The row stays hidden until the profile link and at least 1 blurb are filled in.",
+          "additionalProperties": false,
+          "required": [
+            "items"
+          ],
+          "properties": {
+            "rating": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 5,
+              "description": "The star rating on Google, for example 5 or 4.9."
+            },
+            "reviewCount": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The number of reviews on Google."
+            },
+            "profileUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "The link to all of Jess's reviews on Google."
+            },
+            "linkLabel": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "default": "Read all reviews on Google"
+            },
+            "items": {
+              "type": "array",
+              "maxItems": 8,
+              "description": "Copy each blurb exactly as written on Google. Keep it short; long text is cut.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "authorName",
+                  "text",
+                  "stars"
+                ],
+                "properties": {
+                  "authorName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "description": "As shown on Google, for example \"Kim C.\""
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240,
+                    "x-ui": {
+                      "widget": "textarea",
+                      "rows": 3
+                    }
+                  },
+                  "stars": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "default": 5
+                  }
+                }
               }
             }
           }
