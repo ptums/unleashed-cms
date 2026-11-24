@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Trusted Referrals",
+  "description": "People outside the practice that Jess trusts and refers clients to. They show under \"Trusted Referrals\" in the Clinicians menu of the site header. This is not a page of its own.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-cms": {
+    "kind": "singleton",
+    "template": "SiteHeader",
+    "zones": [
+      "referrals"
+    ]
+  },
+  "required": [
+    "referrals"
+  ],
+  "properties": {
+    "referrals": {
+      "type": "object",
+      "title": "Trusted Referrals",
+      "additionalProperties": false,
+      "x-cms": {
+        "zone": "referrals",
+        "order": 1
+      },
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/referral"
+          },
+          "description": "Listed in this order in the Clinicians menu. Each link opens the person's own site in a new tab."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "referral": {
+      "type": "object",
+      "title": "Referral",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "link"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "The person's name, for example Kristin Brien."
+        },
+        "link": {
+          "type": "string",
+          "format": "uri",
+          "description": "The full web address, starting with https://."
+        }
+      }
+    }
+  }
+}
